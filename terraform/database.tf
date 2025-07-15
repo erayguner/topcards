@@ -1,7 +1,8 @@
 # Cloud SQL PostgreSQL instance
 resource "google_sql_database_instance" "postgres_instance" {
+  count            = var.enable_database ? 1 : 0
   name             = "${var.project_id}-${var.environment}-postgres"
-  database_version = "POSTGRES_16"
+  database_version = var.db_version
   region           = var.region
 
   # Prevent accidental deletion
@@ -136,29 +137,34 @@ resource "google_sql_database_instance" "postgres_instance" {
       record_application_tags = true
       record_client_address   = true
     }
+
+    # User-defined labels for the instance
+    user_labels = var.labels
   }
 
   depends_on = [
-    google_service_networking_connection.private_vpc_connection,
-    google_project_service.sql_api
+    google_service_networking_connection.private_vpc_connection
   ]
 }
 
 # Database user
 resource "google_sql_user" "app_user" {
+  count    = var.enable_database ? 1 : 0
   name     = var.db_user
-  instance = google_sql_database_instance.postgres_instance.name
+  instance = google_sql_database_instance.postgres_instance[0].name
   password = random_password.db_password.result
 }
 
 # Application database
 resource "google_sql_database" "app_database" {
+  count    = var.enable_database ? 1 : 0
   name     = var.db_name
-  instance = google_sql_database_instance.postgres_instance.name
+  instance = google_sql_database_instance.postgres_instance[0].name
 }
 
 # SSL certificate for database connection
 resource "google_sql_ssl_cert" "client_cert" {
+  count       = var.enable_database ? 1 : 0
   common_name = "${var.project_id}-${var.environment}-client-cert"
-  instance    = google_sql_database_instance.postgres_instance.name
+  instance    = google_sql_database_instance.postgres_instance[0].name
 }

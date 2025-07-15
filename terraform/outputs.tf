@@ -99,41 +99,41 @@ output "firewall_rules" {
 
 output "enabled_apis" {
   description = "List of enabled GCP APIs"
-  value = [
-    google_project_service.compute_api.service,
-    google_project_service.storage_api.service,
-    google_project_service.iam_api.service,
-    google_project_service.sql_api.service,
-    google_project_service.networking_api.service,
-    google_project_service.secretmanager_api.service,
-    google_project_service.bigquery_api.service
-  ]
+  value = var.enable_apis ? [
+    google_project_service.compute_api[0].service,
+    google_project_service.storage_api[0].service,
+    google_project_service.iam_api[0].service,
+    google_project_service.sql_api[0].service,
+    google_project_service.networking_api[0].service,
+    google_project_service.secretmanager_api[0].service,
+    google_project_service.bigquery_api[0].service
+  ] : []
 }
 
 # Database outputs
 output "database_instance_name" {
   description = "The name of the Cloud SQL instance"
-  value       = google_sql_database_instance.postgres_instance.name
+  value       = var.enable_database ? google_sql_database_instance.postgres_instance[0].name : null
 }
 
 output "database_instance_connection_name" {
   description = "The connection name of the Cloud SQL instance"
-  value       = google_sql_database_instance.postgres_instance.connection_name
+  value       = var.enable_database ? google_sql_database_instance.postgres_instance[0].connection_name : null
 }
 
 output "database_instance_private_ip" {
   description = "The private IP address of the Cloud SQL instance"
-  value       = google_sql_database_instance.postgres_instance.private_ip_address
+  value       = var.enable_database ? google_sql_database_instance.postgres_instance[0].private_ip_address : null
 }
 
 output "database_name" {
   description = "The name of the application database"
-  value       = google_sql_database.app_database.name
+  value       = var.enable_database ? google_sql_database.app_database[0].name : null
 }
 
 output "database_user" {
   description = "The username of the application database user"
-  value       = google_sql_user.app_user.name
+  value       = var.enable_database ? google_sql_user.app_user[0].name : null
   sensitive   = true
 }
 
@@ -144,13 +144,13 @@ output "database_password_secret_name" {
 
 output "database_ssl_cert" {
   description = "SSL certificate information for database connection"
-  value = {
-    cert             = google_sql_ssl_cert.client_cert.cert
-    common_name      = google_sql_ssl_cert.client_cert.common_name
-    create_time      = google_sql_ssl_cert.client_cert.create_time
-    expiration_time  = google_sql_ssl_cert.client_cert.expiration_time
-    sha1_fingerprint = google_sql_ssl_cert.client_cert.sha1_fingerprint
-  }
+  value = var.enable_database ? {
+    cert             = google_sql_ssl_cert.client_cert[0].cert
+    common_name      = google_sql_ssl_cert.client_cert[0].common_name
+    create_time      = google_sql_ssl_cert.client_cert[0].create_time
+    expiration_time  = google_sql_ssl_cert.client_cert[0].expiration_time
+    sha1_fingerprint = google_sql_ssl_cert.client_cert[0].sha1_fingerprint
+  } : null
   sensitive = true
 }
 
