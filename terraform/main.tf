@@ -67,6 +67,7 @@ resource "google_project_service" "networking_api" {
 # Storage bucket for access logs
 # Note: CKV_GCP_62 fails here by design - log buckets cannot log to themselves
 # This is a false positive in Checkov for dedicated log storage buckets
+#checkov:skip=CKV_GCP_62:Log bucket cannot log to itself - this is by design
 resource "google_storage_bucket" "access_logs" {
   name     = "${var.project_id}-${var.environment}-access-logs"
   location = var.region
@@ -470,7 +471,7 @@ resource "google_sql_database_instance" "postgres_instance" {
 
     database_flags {
       name  = "log_min_messages"
-      value = "error"
+      value = "ERROR"
     }
 
     database_flags {
@@ -500,7 +501,7 @@ resource "google_sql_database_instance" "postgres_instance" {
 
     database_flags {
       name  = "pgaudit.log_level"
-      value = "error"
+      value = "ERROR"
     }
 
     database_flags {

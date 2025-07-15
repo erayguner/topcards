@@ -46,13 +46,13 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up Node.js
-      if: hashFiles('package.json') != ''
+      if: ${{ hashFiles('package.json') != '' }}
       uses: actions/setup-node@v4
       with:
         node-version: '20'
 
     - name: Check Node.js licenses
-      if: hashFiles('package.json') != ''
+      if: ${{ hashFiles('package.json') != '' }}
       continue-on-error: true
       run: |
         npm install -g license-checker
@@ -62,13 +62,13 @@ jobs:
         fi
 
     - name: Set up Python
-      if: hashFiles('requirements.txt') != '' || hashFiles('Pipfile') != '' || hashFiles('pyproject.toml') != ''
+      if: ${{ hashFiles('requirements.txt') != '' || hashFiles('Pipfile') != '' || hashFiles('pyproject.toml') != '' }}
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
 
     - name: Check Python licenses
-      if: hashFiles('requirements.txt') != '' || hashFiles('Pipfile') != '' || hashFiles('pyproject.toml') != ''
+      if: ${{ hashFiles('requirements.txt') != '' || hashFiles('Pipfile') != '' || hashFiles('pyproject.toml') != '' }}
       continue-on-error: true
       run: |
         pip install pip-licenses || echo "pip-licenses install failed, continuing..."
@@ -109,7 +109,7 @@ jobs:
   container-security:
     name: 'Container Security Scan'
     runs-on: ubuntu-latest
-    if: hashFiles('Dockerfile*') != ''
+    if: ${{ hashFiles('Dockerfile*') != '' }}
     continue-on-error: true
     steps:
     - name: Checkout
@@ -132,7 +132,7 @@ jobs:
         output: 'trivy-fs-results.sarif'
 
     - name: Run Trivy vulnerability scanner on image
-      if: hashFiles('Dockerfile') != ''
+      if: ${{ hashFiles('Dockerfile') != '' }}
       uses: aquasecurity/trivy-action@master
       continue-on-error: true
       with:
@@ -148,7 +148,7 @@ jobs:
         sarif_file: 'trivy-fs-results.sarif'
 
     - name: Upload Trivy image scan results
-      if: hashFiles('Dockerfile') != '' && always()
+      if: ${{ hashFiles('Dockerfile') != '' && always() }}
       uses: github/codeql-action/upload-sarif@v3
       continue-on-error: true
       with:
