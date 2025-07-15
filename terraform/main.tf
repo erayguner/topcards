@@ -518,6 +518,11 @@ resource "google_sql_database_instance" "postgres_instance" {
       value = "off"
     }
 
+    database_flags {
+      name  = "log_duration"
+      value = "on"
+    }
+
     # Maintenance window
     maintenance_window {
       day          = 7
