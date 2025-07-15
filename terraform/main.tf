@@ -129,6 +129,40 @@ resource "google_storage_bucket" "app_bucket" {
   depends_on = [google_project_service.storage_api, google_storage_bucket.access_logs]
 }
 
+# Simple GCP storage bucket for general use
+resource "google_storage_bucket" "simple_bucket" {
+  name     = "${var.project_id}-${var.environment}-simple-storage"
+  location = var.region
+
+  # Basic security settings
+  uniform_bucket_level_access = true
+  public_access_prevention    = "enforced"
+
+  # Simple lifecycle rule
+  lifecycle_rule {
+    condition {
+      age = 365
+    }
+    action {
+      type = "Delete"
+    }
+  }
+
+  # Simple versioning
+  versioning {
+    enabled = false
+  }
+
+  # Labels for organization
+  labels = {
+    environment = var.environment
+    purpose     = "simple-storage"
+    managed_by  = "terraform"
+  }
+
+  depends_on = [google_project_service.storage_api]
+}
+
 # KMS key for bucket encryption
 resource "google_kms_key_ring" "app_keyring" {
   name     = "${var.project_id}-${var.environment}-keyring"

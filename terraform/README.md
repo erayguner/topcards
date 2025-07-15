@@ -14,7 +14,9 @@ This Terraform configuration creates a secure, production-ready Google Cloud Pla
 ### Core Resources
 - **VPC Network** with custom subnet and security groups
 - **Compute Instances** with auto-scaling template
-- **Cloud Storage** bucket with encryption and versioning
+- **Cloud Storage** buckets:
+  - App bucket with encryption and versioning
+  - Simple bucket for general storage needs
 - **Cloud SQL PostgreSQL** database with private networking
 - **KMS** encryption keys for data security
 - **Secret Manager** for secure credential storage
@@ -118,7 +120,7 @@ db_disk_size = 100
 After successful deployment, Terraform outputs:
 - **VPC Network** details
 - **Compute Instance** IPs and names
-- **Storage Bucket** URLs
+- **Storage Bucket** URLs (app bucket and simple bucket)
 - **Database Instance** connection details
 - **Database Credentials** secret names
 - **Service Account** emails

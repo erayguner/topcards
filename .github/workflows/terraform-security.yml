@@ -10,6 +10,10 @@ on:
     paths:
       - 'terraform/**'
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   terraform-security:
     name: Terraform Security Analysis
@@ -39,7 +43,7 @@ jobs:
 
     - name: Run Checkov
       id: checkov
-      uses: bridgecrewio/checkov-action@master
+      uses: bridgecrewio/checkov-action@v12.2715.0
       with:
         directory: terraform/
         framework: terraform

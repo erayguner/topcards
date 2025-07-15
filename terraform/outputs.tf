@@ -38,6 +38,21 @@ output "storage_bucket_url" {
   value       = google_storage_bucket.app_bucket.url
 }
 
+output "simple_bucket_name" {
+  description = "The name of the simple storage bucket"
+  value       = google_storage_bucket.simple_bucket.name
+}
+
+output "simple_bucket_url" {
+  description = "The URL of the simple storage bucket"
+  value       = google_storage_bucket.simple_bucket.url
+}
+
+output "simple_bucket_location" {
+  description = "The location of the simple storage bucket"
+  value       = google_storage_bucket.simple_bucket.location
+}
+
 output "kms_key_ring_name" {
   description = "The name of the KMS key ring"
   value       = google_kms_key_ring.app_keyring.name
