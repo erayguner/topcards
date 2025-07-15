@@ -1,3 +1,4 @@
+---
 name: Terraform Security Scanning
 
 on:
@@ -69,7 +70,8 @@ jobs:
 
           # Ensure SARIF file exists in repository root
           if [ ! -f tfsec-results.sarif ]; then
-            echo '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json","runs":[{"tool":{"driver":{"name":"tfsec","version":"1.0.0"}},"results":[]}]}' > tfsec-results.sarif
+            echo '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json",\
+"runs":[{"tool":{"driver":{"name":"tfsec","version":"1.0.0"}},"results":[]}]}' > tfsec-results.sarif
           fi
 
           # Verify file exists and has content
@@ -93,11 +95,14 @@ jobs:
           mkdir -p terrascan-results
 
           # Run Terrascan with Docker
-          docker run --rm -v "$(pwd)/terraform:/iac" tenable/terrascan scan -i terraform -t gcp -o sarif > terrascan.sarif 2>/dev/null || echo "Terrascan scan completed with warnings"
+          docker run --rm -v "$(pwd)/terraform:/iac" tenable/terrascan scan \
+            -i terraform -t gcp -o sarif > terrascan.sarif 2>/dev/null \
+            || echo "Terrascan scan completed with warnings"
 
           # Ensure SARIF file exists and is valid
           if [ ! -f terrascan.sarif ] || [ ! -s terrascan.sarif ]; then
-            echo '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json","runs":[{"tool":{"driver":{"name":"terrascan","version":"1.0.0"}},"results":[]}]}' > terrascan.sarif
+            echo '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json",\
+"runs":[{"tool":{"driver":{"name":"terrascan","version":"1.0.0"}},"results":[]}]}' > terrascan.sarif
           fi
 
           # Verify file

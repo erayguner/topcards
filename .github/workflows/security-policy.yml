@@ -1,3 +1,4 @@
+---
 name: Security Policy Enforcement
 
 on:
@@ -62,24 +63,30 @@ jobs:
           npm install -g license-checker
           if [ -f package.json ]; then
             npm install || echo "npm install failed, continuing..."
-            license-checker --onlyAllow 'MIT;BSD;ISC;Apache-2.0;Unlicense;WTFPL;CC0-1.0' --excludePrivatePackages || echo "License check completed with warnings"
+            license-checker --onlyAllow 'MIT;BSD;ISC;Apache-2.0;Unlicense;WTFPL;CC0-1.0' \
+              --excludePrivatePackages || echo "License check completed with warnings"
           fi
 
       - name: Set up Python
-        if: ${{ hashFiles('requirements.txt') != '' || hashFiles('Pipfile') != '' || hashFiles('pyproject.toml') != '' }}
+        if: >-
+          ${{ hashFiles('requirements.txt') != '' || hashFiles('Pipfile') != ''
+          || hashFiles('pyproject.toml') != '' }}
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Check Python licenses
-        if: ${{ hashFiles('requirements.txt') != '' || hashFiles('Pipfile') != '' || hashFiles('pyproject.toml') != '' }}
+        if: >-
+          ${{ hashFiles('requirements.txt') != '' || hashFiles('Pipfile') != ''
+          || hashFiles('pyproject.toml') != '' }}
         continue-on-error: true
         run: |
           pip install pip-licenses || echo "pip-licenses install failed, continuing..."
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt || echo "requirements.txt install failed, continuing..."
           fi
-          pip-licenses --allow-only="MIT License;BSD License;Apache Software License;ISC License;CC0 License" || echo "License check completed with warnings"
+          pip-licenses --allow-only="MIT License;BSD License;Apache Software License;ISC License;CC0 License" \
+            || echo "License check completed with warnings"
 
   # CodeQL analysis removed as requested
 

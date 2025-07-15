@@ -1,3 +1,4 @@
+---
 name: Security Scanning
 
 on:
@@ -95,4 +96,4 @@ jobs:
           name: semgrep-results
           path: semgrep-report.json
 
-  # Container scanning moved to security-policy.yml with proper Docker file detection
+# Container scanning moved to security-policy.yml with proper Docker file detection
