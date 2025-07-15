@@ -64,6 +64,13 @@ resource "google_project_service" "networking_api" {
   disable_on_destroy         = false
 }
 
+resource "google_project_service" "bigquery_api" {
+  service = "bigquery.googleapis.com"
+
+  disable_dependent_services = true
+  disable_on_destroy         = false
+}
+
 # Storage bucket for access logs
 # Note: CKV_GCP_62 fails here by design - log buckets cannot log to themselves
 # This is a false positive in Checkov for dedicated log storage buckets
@@ -161,6 +168,75 @@ resource "google_storage_bucket" "simple_bucket" {
   }
 
   depends_on = [google_project_service.storage_api]
+}
+
+# BigQuery dataset for CSV data analysis
+resource "google_bigquery_dataset" "csv_dataset" {
+  dataset_id    = "${var.project_id}_${var.environment}_csv_data"
+  friendly_name = "CSV Data Analysis Dataset"
+  description   = "Dataset for analyzing CSV files from the simple storage bucket"
+  location      = var.region
+
+  # Access control
+  access {
+    role          = "OWNER"
+    user_by_email = google_service_account.app_service_account.email
+  }
+
+  access {
+    role          = "READER"
+    special_group = "projectReaders"
+  }
+
+  access {
+    role          = "WRITER"
+    special_group = "projectWriters"
+  }
+
+  # Labels for organization
+  labels = {
+    environment = var.environment
+    purpose     = "csv-analysis"
+    managed_by  = "terraform"
+  }
+
+  depends_on = [google_project_service.bigquery_api]
+}
+
+# BigQuery external table for CSV files in simple bucket
+resource "google_bigquery_table" "csv_external_table" {
+  dataset_id = google_bigquery_dataset.csv_dataset.dataset_id
+  table_id   = "csv_files_external"
+
+  description = "External table reading CSV files from simple storage bucket"
+
+  external_data_configuration {
+    autodetect    = true
+    source_format = "CSV"
+
+    csv_options {
+      quote                 = "\""
+      skip_leading_rows     = 1
+      allow_jagged_rows     = false
+      allow_quoted_newlines = false
+    }
+
+    source_uris = [
+      "gs://${google_storage_bucket.simple_bucket.name}/*.csv"
+    ]
+  }
+
+  # Labels for organization
+  labels = {
+    environment = var.environment
+    purpose     = "csv-external-table"
+    managed_by  = "terraform"
+  }
+
+  depends_on = [
+    google_bigquery_dataset.csv_dataset,
+    google_storage_bucket.simple_bucket
+  ]
 }
 
 # KMS key for bucket encryption
@@ -633,5 +709,19 @@ resource "google_project_iam_member" "app_sa_secret_accessor" {
 resource "google_project_iam_member" "app_sa_sql_client" {
   project = var.project_id
   role    = "roles/cloudsql.client"
+  member  = "serviceAccount:${google_service_account.app_service_account.email}"
+}
+
+# IAM binding for BigQuery data viewer
+resource "google_project_iam_member" "app_sa_bigquery_data_viewer" {
+  project = var.project_id
+  role    = "roles/bigquery.dataViewer"
+  member  = "serviceAccount:${google_service_account.app_service_account.email}"
+}
+
+# IAM binding for BigQuery job user
+resource "google_project_iam_member" "app_sa_bigquery_job_user" {
+  project = var.project_id
+  role    = "roles/bigquery.jobUser"
   member  = "serviceAccount:${google_service_account.app_service_account.email}"
 }

@@ -105,7 +105,8 @@ output "enabled_apis" {
     google_project_service.iam_api.service,
     google_project_service.sql_api.service,
     google_project_service.networking_api.service,
-    google_project_service.secretmanager_api.service
+    google_project_service.secretmanager_api.service,
+    google_project_service.bigquery_api.service
   ]
 }
 
@@ -156,4 +157,30 @@ output "database_ssl_cert" {
 output "private_vpc_connection" {
   description = "The private VPC connection for Cloud SQL"
   value       = google_service_networking_connection.private_vpc_connection.network
+}
+
+# BigQuery outputs
+output "bigquery_dataset_id" {
+  description = "The ID of the BigQuery dataset for CSV data"
+  value       = google_bigquery_dataset.csv_dataset.dataset_id
+}
+
+output "bigquery_dataset_location" {
+  description = "The location of the BigQuery dataset"
+  value       = google_bigquery_dataset.csv_dataset.location
+}
+
+output "bigquery_external_table_id" {
+  description = "The ID of the BigQuery external table for CSV files"
+  value       = google_bigquery_table.csv_external_table.table_id
+}
+
+output "bigquery_external_table_self_link" {
+  description = "The self link of the BigQuery external table"
+  value       = google_bigquery_table.csv_external_table.self_link
+}
+
+output "bigquery_csv_source_uri" {
+  description = "The source URI pattern for CSV files in BigQuery"
+  value       = "gs://${google_storage_bucket.simple_bucket.name}/*.csv"
 }
