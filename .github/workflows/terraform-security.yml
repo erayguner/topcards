@@ -1,0 +1,82 @@
+name: Terraform Security Scanning
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths: 
+      - 'terraform/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'terraform/**'
+
+jobs:
+  terraform-security:
+    name: Terraform Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.5.0
+
+    - name: Terraform Format Check
+      run: terraform fmt -check -recursive terraform/
+
+    - name: Terraform Init
+      run: terraform -chdir=terraform init -backend=false
+
+    - name: Terraform Validate
+      run: terraform -chdir=terraform validate
+
+    - name: Run Checkov
+      id: checkov
+      uses: bridgecrewio/checkov-action@master
+      with:
+        directory: terraform/
+        framework: terraform
+        output_format: sarif
+        output_file_path: checkov-results.sarif
+        soft_fail: true
+
+    - name: Upload Checkov results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: checkov-results.sarif
+
+    - name: Run TFSec
+      uses: aquasecurity/tfsec-action@v1.0.3
+      with:
+        working_directory: terraform/
+        format: sarif
+        soft_fail: true
+
+    - name: Upload TFSec results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: results.sarif
+
+    - name: Run Terrascan
+      id: terrascan
+      uses: tenable/terrascan-action@main
+      with:
+        iac_type: 'terraform'
+        iac_dir: 'terraform/'
+        policy_type: 'gcp'
+        only_warn: true
+        sarif_upload: true
+
+    - name: Upload Terrascan results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: terrascan.sarif
