@@ -86,7 +86,7 @@ variable "labels" {
 variable "db_version" {
   description = "PostgreSQL version for Cloud SQL instance"
   type        = string
-  default     = "POSTGRES_15"
+  default     = "POSTGRES_16"
   validation {
     condition = contains([
       "POSTGRES_13", "POSTGRES_14", "POSTGRES_15", "POSTGRES_16"

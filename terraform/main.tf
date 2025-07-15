@@ -64,6 +64,28 @@ resource "google_project_service" "networking_api" {
   disable_on_destroy         = false
 }
 
+# Storage bucket for access logs
+resource "google_storage_bucket" "access_logs" {
+  name     = "${var.project_id}-${var.environment}-access-logs"
+  location = var.region
+
+  # Security settings
+  uniform_bucket_level_access = true
+  public_access_prevention = "enforced"
+
+  # Lifecycle management for logs
+  lifecycle_rule {
+    condition {
+      age = 90
+    }
+    action {
+      type = "Delete"
+    }
+  }
+
+  depends_on = [google_project_service.storage_api]
+}
+
 # Storage bucket for application data
 resource "google_storage_bucket" "app_bucket" {
   name     = "${var.project_id}-${var.environment}-app-storage"
@@ -76,6 +98,9 @@ resource "google_storage_bucket" "app_bucket" {
 
   # Security settings
   uniform_bucket_level_access = true
+  
+  # Public access prevention
+  public_access_prevention = "enforced"
 
   # Versioning
   versioning {
@@ -87,7 +112,13 @@ resource "google_storage_bucket" "app_bucket" {
     default_kms_key_name = google_kms_crypto_key.bucket_key.id
   }
 
-  depends_on = [google_project_service.storage_api]
+  # Access logging
+  logging {
+    log_bucket        = google_storage_bucket.access_logs.name
+    log_object_prefix = "access-logs/"
+  }
+
+  depends_on = [google_project_service.storage_api, google_storage_bucket.access_logs]
 }
 
 # KMS key for bucket encryption
@@ -127,6 +158,13 @@ resource "google_compute_subnetwork" "subnet" {
   # Enable private Google access
   private_ip_google_access = true
 
+  # Enable VPC Flow Logs for security monitoring
+  log_config {
+    aggregation_interval = "INTERVAL_10_MIN"
+    flow_sampling        = 0.5
+    metadata             = "INCLUDE_ALL_METADATA"
+  }
+
   # Secondary ranges for GKE (if needed)
   secondary_ip_range {
     range_name    = "services-range"
@@ -153,7 +191,7 @@ resource "google_compute_firewall" "allow_http_https" {
   target_tags   = ["web-server"]
 }
 
-# Firewall rule - Allow SSH
+# Firewall rule - Allow SSH from specific IP ranges only
 resource "google_compute_firewall" "allow_ssh" {
   name    = "${var.project_id}-${var.environment}-allow-ssh"
   network = google_compute_network.vpc_network.name
@@ -163,8 +201,30 @@ resource "google_compute_firewall" "allow_ssh" {
     ports    = ["22"]
   }
 
-  source_ranges = ["0.0.0.0/0"]
+  # Restrict SSH access to internal network only for security
+  source_ranges = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
   target_tags   = ["ssh-access"]
+}
+
+# Cloud Router for NAT
+resource "google_compute_router" "router" {
+  name    = "${var.project_id}-${var.environment}-router"
+  region  = var.region
+  network = google_compute_network.vpc_network.id
+}
+
+# Cloud NAT for outbound internet access
+resource "google_compute_router_nat" "nat" {
+  name                               = "${var.project_id}-${var.environment}-nat"
+  router                             = google_compute_router.router.name
+  region                             = var.region
+  nat_ip_allocate_option             = "AUTO_ONLY"
+  source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
+
+  log_config {
+    enable = true
+    filter = "ERRORS_ONLY"
+  }
 }
 
 # Compute Instance Template
@@ -187,15 +247,11 @@ resource "google_compute_instance_template" "app_template" {
     }
   }
 
-  # Network interface
+  # Network interface - Private only for security
   network_interface {
     network    = google_compute_network.vpc_network.self_link
     subnetwork = google_compute_subnetwork.subnet.self_link
-
-    # External IP for internet access
-    access_config {
-      network_tier = "PREMIUM"
-    }
+    # Removed external IP access for security - use Cloud NAT or VPN for outbound access
   }
 
   # Service account
@@ -204,11 +260,19 @@ resource "google_compute_instance_template" "app_template" {
     scopes = ["cloud-platform"]
   }
 
+  # Enable Shielded VM features for security
+  shielded_instance_config {
+    enable_secure_boot          = true
+    enable_vtpm                 = true
+    enable_integrity_monitoring = true
+  }
+
   # Security and startup
   tags = ["web-server", "ssh-access"]
 
   metadata = {
-    startup-script = file("${path.module}/startup-script.sh")
+    startup-script       = file("${path.module}/startup-script.sh")
+    block-project-ssh-keys = "true"
   }
 
   # Lifecycle
@@ -252,15 +316,14 @@ resource "google_compute_instance" "app_instance" {
       size  = 20
       type  = "pd-standard"
     }
+    # Encrypt boot disk with KMS key
+    kms_key_self_link = google_kms_crypto_key.bucket_key.id
   }
 
   network_interface {
     network    = google_compute_network.vpc_network.self_link
     subnetwork = google_compute_subnetwork.subnet.self_link
-
-    access_config {
-      network_tier = "PREMIUM"
-    }
+    # Removed external IP access for security - use Cloud NAT or VPN for outbound access
   }
 
   service_account {
@@ -268,10 +331,18 @@ resource "google_compute_instance" "app_instance" {
     scopes = ["cloud-platform"]
   }
 
+  # Enable Shielded VM features for security
+  shielded_instance_config {
+    enable_secure_boot          = true
+    enable_vtpm                 = true
+    enable_integrity_monitoring = true
+  }
+
   tags = ["web-server", "ssh-access"]
 
   metadata = {
-    startup-script = file("${path.module}/startup-script.sh")
+    startup-script       = file("${path.module}/startup-script.sh")
+    block-project-ssh-keys = "true"
   }
 
   depends_on = [
@@ -309,7 +380,7 @@ resource "random_password" "db_password" {
 # Cloud SQL PostgreSQL instance
 resource "google_sql_database_instance" "postgres_instance" {
   name             = "${var.project_id}-${var.environment}-postgres"
-  database_version = var.db_version
+  database_version = "POSTGRES_16"
   region           = var.region
 
   # Prevent accidental deletion
@@ -349,7 +420,7 @@ resource "google_sql_database_instance" "postgres_instance" {
       }
     }
 
-    # Database flags for security and performance
+    # Enhanced database flags for security and compliance
     database_flags {
       name  = "log_checkpoints"
       value = "on"
@@ -371,8 +442,58 @@ resource "google_sql_database_instance" "postgres_instance" {
     }
 
     database_flags {
+      name  = "log_hostname"
+      value = "on"
+    }
+
+    database_flags {
+      name  = "log_min_messages"
+      value = "error"
+    }
+
+    database_flags {
+      name  = "log_statement"
+      value = "all"
+    }
+
+    database_flags {
       name  = "shared_preload_libraries"
-      value = "pg_stat_statements"
+      value = "pgaudit,pg_stat_statements"
+    }
+
+    database_flags {
+      name  = "pgaudit.log"
+      value = "all"
+    }
+
+    database_flags {
+      name  = "pgaudit.log_catalog"
+      value = "on"
+    }
+
+    database_flags {
+      name  = "pgaudit.log_client"
+      value = "on"
+    }
+
+    database_flags {
+      name  = "pgaudit.log_level"
+      value = "log"
+    }
+
+    database_flags {
+      name  = "pgaudit.log_parameter"
+      value = "on"
+    }
+
+    database_flags {
+      name  = "pgaudit.log_relation"
+      value = "on"
+    }
+
+    database_flags {
+      name  = "pgaudit.log_statement_once"
+      value = "off"
     }
 
     # Maintenance window
