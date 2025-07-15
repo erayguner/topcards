@@ -48,10 +48,12 @@ jobs:
         soft_fail: true
 
     - name: Upload Checkov results
-      uses: github/codeql-action/upload-sarif@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
-        sarif_file: checkov-results.sarif
+        name: checkov-results
+        path: checkov-results.sarif
+        retention-days: 30
 
     - name: Run TFSec Security Scan
       run: |
@@ -74,11 +76,12 @@ jobs:
         ls -la .
         
     - name: Upload TFSec SARIF results
-      uses: github/codeql-action/upload-sarif@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
-        sarif_file: tfsec-results.sarif
-        category: "tfsec"
+        name: tfsec-results
+        path: tfsec-results.sarif
+        retention-days: 30
 
     - name: Run Terrascan Security Scan
       run: |
@@ -98,8 +101,9 @@ jobs:
         echo "Terrascan SARIF file size: $(wc -c < terrascan.sarif) bytes"
 
     - name: Upload Terrascan SARIF results
-      uses: github/codeql-action/upload-sarif@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
-        sarif_file: terrascan.sarif
-        category: "terrascan"
+        name: terrascan-results
+        path: terrascan.sarif
+        retention-days: 30
