@@ -1,3 +1,4 @@
+---
 name: Dependency Updates
 
 on:
@@ -86,23 +87,26 @@ jobs:
         # Create PR using GitHub CLI
         gh pr create \
           --title "chore: Update Terraform provider versions" \
-          --body "## Summary
-        
-        Automated update of Terraform providers to latest compatible versions.
-        
-        ## Changes
-        - Updated .terraform.lock.hcl with latest provider versions
-        - All providers remain within version constraints defined in providers.tf
-        
-        ## Testing
-        - [ ] Terraform validate passes
-        - [ ] Security scans pass
-        - [ ] Plan review shows no unexpected changes
-        
-        ## Notes
-        This is an automated PR. Please review the changes carefully before merging.
-        
-        🤖 Generated with [Claude Code](https://claude.ai/code)" \
+          --body "$(cat <<'EOFBODY'
+## Summary
+
+Automated update of Terraform providers to latest compatible versions.
+
+## Changes
+- Updated .terraform.lock.hcl with latest provider versions
+- All providers remain within version constraints defined in providers.tf
+
+## Testing
+- [ ] Terraform validate passes
+- [ ] Security scans pass
+- [ ] Plan review shows no unexpected changes
+
+## Notes
+This is an automated PR. Please review changes carefully before merging.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+EOFBODY
+)" \
           --head automated/terraform-provider-updates-$(date +%Y%m%d) \
           --base main \
           --label "dependencies" \

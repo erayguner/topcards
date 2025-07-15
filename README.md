@@ -63,4 +63,16 @@ This project follows security best practices:
 - Infrastructure changes are validated and planned
 - Security findings are automatically reported
 
-For security issues, please see our security policy in the GitHub Security tab.
+For security issues, please see our [Security Policy](SECURITY.md).
+
+## Contributing
+
+We welcome contributions to TopCards! Please see our [Contributing Guidelines](CONTRIBUTING.md) for detailed information on:
+
+- Development workflow and branch naming conventions
+- Code style and quality standards
+- Security guidelines and best practices
+- Testing requirements and procedures
+- Pull request process and review guidelines
+
+For questions or support, please create an issue or start a discussion.

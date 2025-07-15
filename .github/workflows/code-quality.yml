@@ -1,10 +1,11 @@
+---
 name: Code Quality
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
   schedule:
     # Run daily at 2 AM UTC
     - cron: '0 2 * * *'
@@ -18,7 +19,7 @@ jobs:
   terraform-quality:
     name: Terraform Code Quality
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -27,7 +28,6 @@ jobs:
       uses: hashicorp/setup-terraform@v3
       with:
         terraform_version: ~1.5
-        
     - name: Terraform Format Check
       run: |
         cd terraform

@@ -34,7 +34,14 @@
     "eray",
     "guner",
     "erayguner",
-    "deps"
+    "deps",
+    "pgaudit",
+    "autoresize",
+    "vtpm",
+    "secretmanager",
+    "servicenetworking",
+    "sqladmin",
+    "runbooks"
   ],
   "ignorePaths": [
     "node_modules/**",
