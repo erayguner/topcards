@@ -18,6 +18,7 @@ This Terraform configuration creates a secure, production-ready Google Cloud Pla
   - App bucket with encryption and versioning
   - Simple bucket for general storage needs
 - **Cloud SQL PostgreSQL** database with private networking
+- **BigQuery** dataset with external table for CSV file analysis
 - **KMS** encryption keys for data security
 - **Secret Manager** for secure credential storage
 - **Service Accounts** with least-privilege access
@@ -123,6 +124,7 @@ After successful deployment, Terraform outputs:
 - **Storage Bucket** URLs (app bucket and simple bucket)
 - **Database Instance** connection details
 - **Database Credentials** secret names
+- **BigQuery Dataset** and external table details
 - **Service Account** emails
 - **Firewall Rules** names
 
