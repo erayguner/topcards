@@ -133,27 +133,26 @@ jobs:
         # Install TFSec
         curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
         
-        # Run TFSec scan from repository root, targeting terraform directory
-        tfsec --format sarif --out terraform/tfsec-results.sarif ./terraform || echo "TFSec scan completed with warnings"
+        # Run TFSec scan (we're already in terraform/ directory)
+        tfsec --format sarif --out tfsec-results.sarif . || echo "TFSec scan completed with warnings"
         
-        # Ensure SARIF file exists in correct location
-        if [ ! -f terraform/tfsec-results.sarif ]; then
-          mkdir -p terraform
-          echo '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json","runs":[{"tool":{"driver":{"name":"tfsec","version":"1.0.0"}},"results":[]}]}' > terraform/tfsec-results.sarif
+        # Ensure SARIF file exists in current directory
+        if [ ! -f tfsec-results.sarif ]; then
+          echo '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json","runs":[{"tool":{"driver":{"name":"tfsec","version":"1.0.0"}},"results":[]}]}' > tfsec-results.sarif
         fi
         
         # Verify file exists and has content
-        ls -la terraform/tfsec-results.sarif
-        echo "SARIF file size: $(wc -c < terraform/tfsec-results.sarif) bytes"
+        ls -la tfsec-results.sarif
+        echo "SARIF file size: $(wc -c < tfsec-results.sarif) bytes"
         echo "Current working directory: $(pwd)"
-        echo "Files in terraform directory:"
-        ls -la terraform/
+        echo "Files in current directory:"
+        ls -la .
         
     - name: Upload TFSec SARIF results
       if: always()
       uses: github/codeql-action/upload-sarif@v3
       with:
-        sarif_file: terraform/tfsec-results.sarif
+        sarif_file: tfsec-results.sarif
         category: "tfsec"
 
   # Terraform auto-deployment removed for security
