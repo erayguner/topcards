@@ -41,7 +41,10 @@
     "secretmanager",
     "servicenetworking",
     "sqladmin",
-    "runbooks"
+    "runbooks",
+    "subnetworks",
+    "cloudsql",
+    "highmem"
   ],
   "ignorePaths": [
     "node_modules/**",

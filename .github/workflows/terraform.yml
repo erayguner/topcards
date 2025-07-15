@@ -1,13 +1,14 @@
+---
 name: Terraform CI/CD
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'terraform/**'
       - '.github/workflows/terraform.yml'
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - 'terraform/**'
       - '.github/workflows/terraform.yml'
@@ -20,7 +21,7 @@ permissions:
 env:
   TF_VERSION: '1.5.0'
   TF_IN_AUTOMATION: true
-  TF_CLI_ARGS: "-no-color"
+  TF_CLI_ARGS: '-no-color'
 
 jobs:
   terraform-check:
@@ -30,63 +31,63 @@ jobs:
     defaults:
       run:
         working-directory: terraform
-    
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: ${{ env.TF_VERSION }}
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
 
-    - name: Terraform Format Check
-      id: fmt
-      run: terraform fmt -check -recursive
-      continue-on-error: true
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true
 
-    - name: Terraform Init
-      id: init
-      run: terraform init -backend=false
+      - name: Terraform Init
+        id: init
+        run: terraform init -backend=false
 
-    - name: Terraform Validate
-      id: validate
-      run: terraform validate
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
 
-    - name: Terraform Plan (Validation Only)
-      id: plan
-      run: |
-        # Create a basic terraform.tfvars for validation
-        cat > terraform.tfvars << EOF
-        project_id = "example-project"
-        environment = "dev"
-        region = "us-central1"
-        zone = "us-central1-a"
-        machine_type = "e2-micro"
-        instance_count = 1
-        db_tier = "db-f1-micro"
-        db_disk_size = 20
-        db_user = "app_user"
-        db_name = "app_db"
-        EOF
-        
-        # Run terraform plan for validation only (no actual deployment)
-        terraform plan -out=tfplan || echo "Terraform plan completed with warnings"
-      continue-on-error: true
+      - name: Terraform Plan (Validation Only)
+        id: plan
+        run: |
+          # Create a basic terraform.tfvars for validation
+          cat > terraform.tfvars << EOF
+          project_id = "example-project"
+          environment = "dev"
+          region = "us-central1"
+          zone = "us-central1-a"
+          machine_type = "e2-micro"
+          instance_count = 1
+          db_tier = "db-f1-micro"
+          db_disk_size = 20
+          db_user = "app_user"
+          db_name = "app_db"
+          EOF
 
-    - name: Terraform Summary
-      if: always()
-      run: |
-        echo "## 🏗️ Terraform Workflow Summary" >> $GITHUB_STEP_SUMMARY
-        echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
-        echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
-        echo "| Format Check | ${{ steps.fmt.outcome }} |" >> $GITHUB_STEP_SUMMARY
-        echo "| Initialize | ${{ steps.init.outcome }} |" >> $GITHUB_STEP_SUMMARY
-        echo "| Validate | ${{ steps.validate.outcome }} |" >> $GITHUB_STEP_SUMMARY
-        echo "| Plan | ${{ steps.plan.outcome }} |" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Event**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Triggered by**: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          # Run terraform plan for validation only (no actual deployment)
+          terraform plan -out=tfplan || echo "Terraform plan completed with warnings"
+        continue-on-error: true
+
+      - name: Terraform Summary
+        if: always()
+        run: |
+          echo "## 🏗️ Terraform Workflow Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Format Check | ${{ steps.fmt.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Initialize | ${{ steps.init.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Validate | ${{ steps.validate.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Plan | ${{ steps.plan.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Event**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by**: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
 
   terraform-security:
     name: 'Terraform Security Scan'
@@ -95,57 +96,65 @@ jobs:
     defaults:
       run:
         working-directory: terraform
-    
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Run Checkov
-      id: checkov
-      uses: bridgecrewio/checkov-action@v12.2715.0
-      with:
-        directory: terraform
-        framework: terraform
-        output_format: sarif
-        output_file_path: checkov-results.sarif
-        quiet: true
-        soft_fail: true
+      - name: Run Checkov
+        id: checkov
+        uses: bridgecrewio/checkov-action@v12.2715.0
+        with:
+          directory: terraform
+          framework: terraform
+          output_format: sarif
+          output_file_path: checkov-results.sarif
+          quiet: true
+          soft_fail: true
 
-    - name: Upload Checkov results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: checkov-results
-        path: checkov-results.sarif
-        retention-days: 30
+      - name: Upload Checkov results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: checkov-results
+          path: checkov-results.sarif
+          retention-days: 30
 
-    - name: Run TFSec Security Scan
-      run: |
-        # Install TFSec
-        curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
-        
-        # Run TFSec scan (we're already in terraform/ directory)
-        tfsec --format sarif --out tfsec-results.sarif . || echo "TFSec scan completed with warnings"
-        
-        # Ensure SARIF file exists in current directory
-        if [ ! -f tfsec-results.sarif ]; then
-          echo '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json","runs":[{"tool":{"driver":{"name":"tfsec","version":"1.0.0"}},"results":[]}]}' > tfsec-results.sarif
-        fi
-        
-        # Verify file exists and has content
-        ls -la tfsec-results.sarif
-        echo "SARIF file size: $(wc -c < tfsec-results.sarif) bytes"
-        echo "Current working directory: $(pwd)"
-        echo "Files in current directory:"
-        ls -la .
-        
-    - name: Upload TFSec SARIF results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: tfsec-results
-        path: tfsec-results.sarif
-        retention-days: 30
+      - name: Run TFSec Security Scan
+        run: |
+          # Install TFSec
+          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
 
-  # Terraform auto-deployment removed for security
-  # Manual deployment should be done through secure CI/CD pipeline with proper approvals
+          # Run TFSec scan (we're already in terraform/ directory)
+          tfsec --format sarif --out tfsec-results.sarif . || echo "TFSec scan completed with warnings"
+
+          # Ensure SARIF file exists in current directory
+          if [ ! -f tfsec-results.sarif ]; then
+            echo '{
+              "version":"2.1.0",
+              "$schema":"https://json.schemastore.org/sarif-2.1.0.json",
+              "runs":[{
+                "tool":{"driver":{"name":"tfsec","version":"1.0.0"}},
+                "results":[]
+              }]
+            }' > tfsec-results.sarif
+          fi
+
+          # Verify file exists and has content
+          ls -la tfsec-results.sarif
+          echo "SARIF file size: $(wc -c < tfsec-results.sarif) bytes"
+          echo "Current working directory: $(pwd)"
+          echo "Files in current directory:"
+          ls -la .
+
+      - name: Upload TFSec SARIF results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfsec-results
+          path: tfsec-results.sarif
+          retention-days: 30
+
+# Terraform auto-deployment removed for security
+# Manual deployment should be done through secure CI/CD pipeline
+# with proper approvals

@@ -1,13 +1,9 @@
-# Google Cloud Platform Terraform Configuration
+# TopCards Infrastructure
 
-![Security](https://img.shields.io/badge/Security-Hardened-green)
-![Checkov](https://img.shields.io/badge/Checkov-81%20Passed-brightgreen)
-![Terraform](https://img.shields.io/badge/Terraform-1.5+-blue)
-![GCP](https://img.shields.io/badge/Google%20Cloud-Certified-blue)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
-![License](https://img.shields.io/badge/License-MIT-yellow)
+This directory contains the Terraform configuration for the TopCards application infrastructure on Google Cloud Platform.
 
-This Terraform configuration creates a secure, production-ready Google Cloud Platform infrastructure for the TopCards application with comprehensive security hardening and compliance.
+<!-- BEGIN_TF_DOCS -->
+<!-- END_TF_DOCS -->
 
 ## 🏗️ Infrastructure Components
 

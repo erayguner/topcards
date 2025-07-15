@@ -21,180 +21,181 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: ~1.5
-    - name: Terraform Format Check
-      run: |
-        cd terraform
-        terraform fmt -check -recursive
-        
-    - name: Terraform Validate
-      run: |
-        cd terraform
-        terraform init -backend=false
-        terraform validate
-        
-    - name: TFLint
-      uses: terraform-linters/setup-tflint@v4
-      with:
-        tflint_version: latest
-        
-    - name: Run TFLint
-      run: |
-        cd terraform
-        tflint --init
-        tflint --format=compact
-        
-    - name: Terraform Docs Check
-      uses: terraform-docs/gh-actions@v1.0.0
-      with:
-        working-dir: terraform
-        output-file: README.md
-        output-method: inject
-        git-push: false
-        fail-on-diff: true
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ~1.5
+      - name: Terraform Format Check
+        run: |
+          cd terraform
+          terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        run: |
+          cd terraform
+          terraform init -backend=false
+          terraform validate
+
+      - name: TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: Run TFLint
+        run: |
+          cd terraform
+          tflint --init
+          tflint --format=compact
+
+      - name: Terraform Docs Check
+        uses: terraform-docs/gh-actions@v1.0.0
+        with:
+          working-dir: terraform
+          output-file: README.md
+          output-method: inject
+          git-push: false
+          fail-on-diff: true
 
   documentation-quality:
     name: Documentation Quality
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        
-    - name: Install markdown tools
-      run: |
-        npm install -g markdownlint-cli markdown-link-check
-        
-    - name: Lint Markdown
-      run: |
-        markdownlint '**/*.md' --ignore node_modules
-        
-    - name: Check Markdown Links
-      run: |
-        find . -name "*.md" -not -path "./node_modules/*" | xargs markdown-link-check --config .github/configs/mlc_config.json || true
-        
-    - name: Check README Completeness
-      run: |
-        # Check if README has required sections
-        sections=("## Getting Started" "## Security" "## Contributing")
-        for section in "${sections[@]}"; do
-          if ! grep -q "$section" README.md; then
-            echo "Missing required section: $section"
-            exit 1
-          fi
-        done
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install markdown tools
+        run: |
+          npm install -g markdownlint-cli markdown-link-check
+
+      - name: Lint Markdown
+        run: |
+          markdownlint '**/*.md' --ignore node_modules
+
+      - name: Check Markdown Links
+        run: |
+          find . -name "*.md" -not -path "./node_modules/*" |
+            xargs markdown-link-check --config .github/configs/mlc_config.json || true
+
+      - name: Check README Completeness
+        run: |
+          # Check if README has required sections
+          sections=("## Getting Started" "## Security" "## Contributing")
+          for section in "${sections[@]}"; do
+            if ! grep -q "$section" README.md; then
+              echo "Missing required section: $section"
+              exit 1
+            fi
+          done
 
   spell-check:
     name: Spell Check
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Run Spell Check
-      uses: streetsidesoftware/cspell-action@v6
-      with:
-        files: |
-          **/*.md
-          **/*.tf
-          **/*.yml
-          **/*.yaml
-        config: .github/configs/cspell.json
-        incremental_files_only: false
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Spell Check
+        uses: streetsidesoftware/cspell-action@v6
+        with:
+          files: |
+            **/*.md
+            **/*.tf
+            **/*.yml
+            **/*.yaml
+          config: .github/configs/cspell.json
+          incremental_files_only: false
 
   yaml-lint:
     name: YAML Lint
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.x'
-        
-    - name: Install yamllint
-      run: pip install yamllint
-      
-    - name: Lint YAML files
-      run: |
-        yamllint .github/workflows/ -c .github/configs/yamllint.yml
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: Lint YAML files
+        run: |
+          yamllint .github/workflows/ -c .github/configs/yamllint.yml
 
   security-baseline:
     name: Security Baseline Check
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Check for security files
-      run: |
-        required_files=(
-          "SECURITY.md"
-          ".github/workflows/security-scan.yml"
-          ".github/workflows/secret-scanning.yml"
-        )
-        
-        for file in "${required_files[@]}"; do
-          if [ ! -f "$file" ]; then
-            echo "Missing required security file: $file"
-            exit 1
-          fi
-        done
-        
-    - name: Verify .gitignore completeness
-      run: |
-        # Check for common sensitive patterns in .gitignore
-        patterns=(
-          "*.tfvars"
-          "*.pem"
-          "*.key"
-          ".env"
-          "terraform.tfstate"
-        )
-        
-        for pattern in "${patterns[@]}"; do
-          if ! grep -q "$pattern" .gitignore 2>/dev/null; then
-            echo "Warning: Consider adding '$pattern' to .gitignore"
-          fi
-        done
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for security files
+        run: |
+          required_files=(
+            "SECURITY.md"
+            ".github/workflows/security-scan.yml"
+            ".github/workflows/secret-scanning.yml"
+          )
+
+          for file in "${required_files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "Missing required security file: $file"
+              exit 1
+            fi
+          done
+
+      - name: Verify .gitignore completeness
+        run: |
+          # Check for common sensitive patterns in .gitignore
+          patterns=(
+            "*.tfvars"
+            "*.pem"
+            "*.key"
+            ".env"
+            "terraform.tfstate"
+          )
+
+          for pattern in "${patterns[@]}"; do
+            if ! grep -q "$pattern" .gitignore 2>/dev/null; then
+              echo "Warning: Consider adding '$pattern' to .gitignore"
+            fi
+          done
 
   quality-gate:
     name: Quality Gate
     runs-on: ubuntu-latest
     needs: [terraform-quality, documentation-quality, yaml-lint, security-baseline]
     if: always()
-    
+
     steps:
-    - name: Check Quality Gate
-      run: |
-        echo "Quality check results:"
-        echo "Terraform Quality: ${{ needs.terraform-quality.result }}"
-        echo "Documentation Quality: ${{ needs.documentation-quality.result }}"
-        echo "YAML Lint: ${{ needs.yaml-lint.result }}"
-        echo "Security Baseline: ${{ needs.security-baseline.result }}"
-        
-        if [[ "${{ needs.terraform-quality.result }}" == "failure" || 
-              "${{ needs.documentation-quality.result }}" == "failure" || 
-              "${{ needs.yaml-lint.result }}" == "failure" || 
-              "${{ needs.security-baseline.result }}" == "failure" ]]; then
-          echo "Quality gate failed!"
-          exit 1
-        fi
-        
-        echo "Quality gate passed!"
+      - name: Check Quality Gate
+        run: |
+          echo "Quality check results:"
+          echo "Terraform Quality: ${{ needs.terraform-quality.result }}"
+          echo "Documentation Quality: ${{ needs.documentation-quality.result }}"
+          echo "YAML Lint: ${{ needs.yaml-lint.result }}"
+          echo "Security Baseline: ${{ needs.security-baseline.result }}"
+
+          if [[ "${{ needs.terraform-quality.result }}" == "failure" ||
+                "${{ needs.documentation-quality.result }}" == "failure" ||
+                "${{ needs.yaml-lint.result }}" == "failure" ||
+                "${{ needs.security-baseline.result }}" == "failure" ]]; then
+            echo "Quality gate failed!"
+            exit 1
+          fi
+
+          echo "Quality gate passed!"
