@@ -73,7 +73,7 @@ resource "google_storage_bucket" "access_logs" {
 
   # Security settings
   uniform_bucket_level_access = true
-  public_access_prevention = "enforced"
+  public_access_prevention    = "enforced"
 
   # Versioning for compliance
   versioning {
@@ -105,7 +105,7 @@ resource "google_storage_bucket" "app_bucket" {
 
   # Security settings
   uniform_bucket_level_access = true
-  
+
   # Public access prevention
   public_access_prevention = "enforced"
 
@@ -293,7 +293,7 @@ resource "google_compute_instance_template" "app_template" {
   tags = ["web-server", "ssh-access"]
 
   metadata = {
-    startup-script       = file("${path.module}/startup-script.sh")
+    startup-script         = file("${path.module}/startup-script.sh")
     block-project-ssh-keys = "true"
   }
 
@@ -363,7 +363,7 @@ resource "google_compute_instance" "app_instance" {
   tags = ["web-server", "ssh-access"]
 
   metadata = {
-    startup-script       = file("${path.module}/startup-script.sh")
+    startup-script         = file("${path.module}/startup-script.sh")
     block-project-ssh-keys = "true"
   }
 

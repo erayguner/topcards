@@ -59,8 +59,8 @@ output "instance_names" {
 }
 
 output "instance_external_ips" {
-  description = "The external IP addresses of the compute instances"
-  value       = google_compute_instance.app_instance[*].network_interface.0.access_config.0.nat_ip
+  description = "The external IP addresses of the compute instances (none - private only)"
+  value       = []
 }
 
 output "instance_internal_ips" {
@@ -76,7 +76,8 @@ output "instance_zones" {
 output "firewall_rules" {
   description = "The names of the firewall rules"
   value = [
-    google_compute_firewall.allow_http_https.name,
+    google_compute_firewall.allow_https.name,
+    google_compute_firewall.allow_http_lb.name,
     google_compute_firewall.allow_ssh.name
   ]
 }

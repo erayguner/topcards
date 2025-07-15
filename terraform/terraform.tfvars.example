@@ -26,7 +26,7 @@ labels = {
 
 # Database configuration
 enable_database = true
-db_version      = "POSTGRES_15"
+db_version      = "POSTGRES_16"
 db_tier         = "db-f1-micro"
 db_disk_size    = 20
 db_name         = "topcards_app"
