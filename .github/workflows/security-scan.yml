@@ -10,36 +10,7 @@ on:
     - cron: '0 2 * * *'
 
 jobs:
-  codeql-analysis:
-    name: CodeQL Analysis
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [ 'python', 'javascript' ]
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
-        languages: ${{ matrix.language }}
-        queries: security-extended,security-and-quality
-
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v3
-
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
-      with:
-        category: "/language:${{matrix.language}}"
+  # CodeQL analysis moved to security-policy.yml to avoid duplication
 
   secret-scanning:
     name: Secret Scanning
@@ -120,25 +91,4 @@ jobs:
         name: semgrep-results
         path: semgrep-report.json
 
-  container-scanning:
-    name: Container Security Scanning
-    runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.message, 'docker') || contains(github.event.head_commit.message, 'container')
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: 'fs'
-        scan-ref: '.'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-
-    - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v3
-      if: always()
-      with:
-        sarif_file: 'trivy-results.sarif'
+  # Container scanning moved to security-policy.yml with proper Docker file detection

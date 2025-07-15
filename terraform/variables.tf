@@ -81,3 +81,65 @@ variable "labels" {
     project     = "topcards"
   }
 }
+
+# Database variables
+variable "db_version" {
+  description = "PostgreSQL version for Cloud SQL instance"
+  type        = string
+  default     = "POSTGRES_16"
+  validation {
+    condition = contains([
+      "POSTGRES_13", "POSTGRES_14", "POSTGRES_15", "POSTGRES_16"
+    ], var.db_version)
+    error_message = "Database version must be a supported PostgreSQL version."
+  }
+}
+
+variable "db_tier" {
+  description = "Machine type for Cloud SQL instance"
+  type        = string
+  default     = "db-f1-micro"
+  validation {
+    condition = contains([
+      "db-f1-micro", "db-g1-small", "db-n1-standard-1", "db-n1-standard-2",
+      "db-n1-standard-4", "db-n1-highmem-2", "db-n1-highmem-4"
+    ], var.db_tier)
+    error_message = "Database tier must be a valid Cloud SQL machine type."
+  }
+}
+
+variable "db_disk_size" {
+  description = "Disk size in GB for Cloud SQL instance"
+  type        = number
+  default     = 20
+  validation {
+    condition     = var.db_disk_size >= 10 && var.db_disk_size <= 10000
+    error_message = "Database disk size must be between 10 and 10000 GB."
+  }
+}
+
+variable "db_name" {
+  description = "Name of the application database"
+  type        = string
+  default     = "topcards_app"
+  validation {
+    condition     = can(regex("^[a-zA-Z][a-zA-Z0-9_]*$", var.db_name))
+    error_message = "Database name must start with a letter and contain only letters, numbers, and underscores."
+  }
+}
+
+variable "db_user" {
+  description = "Username for the application database user"
+  type        = string
+  default     = "app_user"
+  validation {
+    condition     = can(regex("^[a-zA-Z][a-zA-Z0-9_]*$", var.db_user))
+    error_message = "Database user must start with a letter and contain only letters, numbers, and underscores."
+  }
+}
+
+variable "enable_database" {
+  description = "Whether to create Cloud SQL database resources"
+  type        = bool
+  default     = true
+}
