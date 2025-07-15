@@ -28,7 +28,7 @@ jobs:
 
     - name: Upload Dependency Check results
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dependency-check-report
         path: reports/
@@ -44,7 +44,7 @@ jobs:
       if: hashFiles('package.json') != ''
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
 
     - name: Install license-checker
       if: hashFiles('package.json') != ''
@@ -58,7 +58,7 @@ jobs:
 
     - name: Set up Python
       if: hashFiles('requirements.txt') != '' || hashFiles('Pipfile') != ''
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.9'
 
@@ -150,7 +150,7 @@ jobs:
         publish_results: true
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: SARIF file
         path: results.sarif
