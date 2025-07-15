@@ -168,13 +168,28 @@ After successful deployment, Terraform outputs:
 
 ```
 terraform/
-├── main.tf                    # Main infrastructure resources
+├── main.tf                    # Main entry point and documentation
+├── providers.tf               # Terraform and provider configuration
+├── apis.tf                    # Google Cloud API enablement
+├── networking.tf              # VPC, subnets, firewall rules, NAT
+├── storage.tf                 # Cloud Storage buckets
+├── security.tf                # KMS, IAM, service accounts, secrets
+├── compute.tf                 # Compute instances and templates
+├── database.tf                # Cloud SQL PostgreSQL configuration
+├── bigquery.tf                # BigQuery dataset and external tables
 ├── variables.tf               # Input variables and validation
 ├── outputs.tf                 # Output values
 ├── terraform.tfvars.example   # Example variables file
 ├── startup-script.sh          # VM initialization script
 └── README.md                  # This documentation
 ```
+
+### File Organization Benefits
+- **Modular Structure**: Each resource type has its own file for better organization
+- **Easy Navigation**: Find specific resources quickly by file name
+- **Improved Maintainability**: Easier to review and modify specific components
+- **Team Collaboration**: Multiple developers can work on different components simultaneously
+- **Clear Dependencies**: Resource relationships are more apparent within each file
 
 ## 🚨 Important Notes
 
