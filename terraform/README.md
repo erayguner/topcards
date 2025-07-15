@@ -8,16 +8,21 @@ This Terraform configuration creates a secure, production-ready Google Cloud Pla
 - **VPC Network** with custom subnet and security groups
 - **Compute Instances** with auto-scaling template
 - **Cloud Storage** bucket with encryption and versioning
+- **Cloud SQL PostgreSQL** database with private networking
 - **KMS** encryption keys for data security
+- **Secret Manager** for secure credential storage
 - **Service Accounts** with least-privilege access
 - **Firewall Rules** for controlled network access
 
 ### Security Features
 - 🔐 **KMS Encryption** for storage and compute disks
+- 🗄️ **Private Database** access via VPC peering
+- 🔑 **Secret Manager** for database credentials
 - 🛡️ **IAM** service accounts with minimal permissions
 - 🚫 **Network Security** with custom firewall rules
 - 🔒 **Private Google Access** enabled on subnets
 - 📝 **Audit Logging** through GCP APIs
+- 🔐 **SSL/TLS** required for database connections
 
 ## 🚀 Quick Start
 
@@ -64,6 +69,12 @@ This Terraform configuration creates a secure, production-ready Google Cloud Pla
 | `environment` | Environment (dev/staging/prod) | `dev` | ❌ |
 | `machine_type` | VM machine type | `e2-micro` | ❌ |
 | `instance_count` | Number of instances | `1` | ❌ |
+| `enable_database` | Create Cloud SQL database | `true` | ❌ |
+| `db_version` | PostgreSQL version | `POSTGRES_15` | ❌ |
+| `db_tier` | Database machine type | `db-f1-micro` | ❌ |
+| `db_disk_size` | Database disk size (GB) | `20` | ❌ |
+| `db_name` | Application database name | `topcards_app` | ❌ |
+| `db_user` | Database user name | `app_user` | ❌ |
 
 ## 🔧 Configuration
 
@@ -78,6 +89,8 @@ instance_count = 1
 environment = "prod"
 machine_type = "e2-standard-2"
 instance_count = 3
+db_tier = "db-n1-standard-2"
+db_disk_size = 100
 ```
 
 ### Security Configuration
@@ -92,6 +105,8 @@ After successful deployment, Terraform outputs:
 - **VPC Network** details
 - **Compute Instance** IPs and names
 - **Storage Bucket** URLs
+- **Database Instance** connection details
+- **Database Credentials** secret names
 - **Service Account** emails
 - **Firewall Rules** names
 

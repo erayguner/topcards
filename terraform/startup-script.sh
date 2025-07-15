@@ -20,6 +20,9 @@ curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /
 apt-get update
 apt-get install -y google-cloud-sdk
 
+# Install PostgreSQL client
+apt-get install -y postgresql-client-14
+
 # Install Docker
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
@@ -64,6 +67,13 @@ cat > /var/www/html/index.html << EOF
             <p>• Nginx: Running</p>
             <p>• Docker: Installed</p>
             <p>• Google Cloud SDK: Installed</p>
+            <p>• PostgreSQL Client: Installed</p>
+        </div>
+        <div class="info">
+            <h3>Database Connection</h3>
+            <p>• Cloud SQL PostgreSQL: Private network</p>
+            <p>• SSL/TLS: Required</p>
+            <p>• Credentials: Secret Manager</p>
         </div>
     </div>
 </body>
