@@ -1,5 +1,22 @@
 # TopCards
 
+[![Terraform CI/CD](https://github.com/erayguner/topcards/workflows/Terraform%20CI%2FCD/badge.svg)](https://github.com/erayguner/topcards/actions/workflows/terraform.yml)
+[![Terraform Security Scanning](https://github.com/erayguner/topcards/workflows/Terraform%20Security%20Scanning/badge.svg)](https://github.com/erayguner/topcards/actions/workflows/terraform-security.yml)
+[![Security Policy Enforcement](https://github.com/erayguner/topcards/workflows/Security%20Policy%20Enforcement/badge.svg)](https://github.com/erayguner/topcards/actions/workflows/security-policy.yml)
+[![Security Scanning](https://github.com/erayguner/topcards/workflows/Security%20Scanning/badge.svg)](https://github.com/erayguner/topcards/actions/workflows/security-scan.yml)
+[![Secret Scanning](https://github.com/erayguner/topcards/workflows/Secret%20Scanning/badge.svg)](https://github.com/erayguner/topcards/actions/workflows/secret-scanning.yml)
+
+![GitHub issues](https://img.shields.io/github/issues/erayguner/topcards)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/erayguner/topcards)
+![GitHub](https://img.shields.io/github/license/erayguner/topcards)
+![GitHub last commit](https://img.shields.io/github/last-commit/erayguner/topcards)
+![GitHub repo size](https://img.shields.io/github/repo-size/erayguner/topcards)
+
+![Terraform](https://img.shields.io/badge/Terraform-1.5+-blue?logo=terraform)
+![Google Cloud](https://img.shields.io/badge/Google%20Cloud-Platform-blue?logo=google-cloud)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?logo=postgresql)
+![Security](https://img.shields.io/badge/Security-Hardened-green?logo=shield)
+
 A secure, well-tested application with comprehensive CI/CD pipelines.
 
 ## Security & CI/CD
