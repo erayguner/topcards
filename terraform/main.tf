@@ -65,6 +65,8 @@ resource "google_project_service" "networking_api" {
 }
 
 # Storage bucket for access logs
+# Note: CKV_GCP_62 fails here by design - log buckets cannot log to themselves
+# This is a false positive in Checkov for dedicated log storage buckets
 resource "google_storage_bucket" "access_logs" {
   name     = "${var.project_id}-${var.environment}-access-logs"
   location = var.region
@@ -72,6 +74,11 @@ resource "google_storage_bucket" "access_logs" {
   # Security settings
   uniform_bucket_level_access = true
   public_access_prevention = "enforced"
+
+  # Versioning for compliance
+  versioning {
+    enabled = true
+  }
 
   # Lifecycle management for logs
   lifecycle_rule {
@@ -177,17 +184,32 @@ resource "google_compute_subnetwork" "subnet" {
   }
 }
 
-# Firewall rule - Allow HTTP and HTTPS
-resource "google_compute_firewall" "allow_http_https" {
-  name    = "${var.project_id}-${var.environment}-allow-http-https"
+# Firewall rule - Allow HTTPS only (secure web traffic)
+resource "google_compute_firewall" "allow_https" {
+  name    = "${var.project_id}-${var.environment}-allow-https"
   network = google_compute_network.vpc_network.name
 
   allow {
     protocol = "tcp"
-    ports    = ["80", "443"]
+    ports    = ["443"]
   }
 
   source_ranges = ["0.0.0.0/0"]
+  target_tags   = ["web-server"]
+}
+
+# Firewall rule - Allow HTTP from load balancer only
+resource "google_compute_firewall" "allow_http_lb" {
+  name    = "${var.project_id}-${var.environment}-allow-http-lb"
+  network = google_compute_network.vpc_network.name
+
+  allow {
+    protocol = "tcp"
+    ports    = ["80"]
+  }
+
+  # Restrict HTTP to Google Load Balancer IP ranges
+  source_ranges = ["130.211.0.0/22", "35.191.0.0/16"]
   target_tags   = ["web-server"]
 }
 
@@ -463,7 +485,7 @@ resource "google_sql_database_instance" "postgres_instance" {
 
     database_flags {
       name  = "pgaudit.log"
-      value = "all"
+      value = "ddl,dml,role,function,misc"
     }
 
     database_flags {
@@ -478,7 +500,7 @@ resource "google_sql_database_instance" "postgres_instance" {
 
     database_flags {
       name  = "pgaudit.log_level"
-      value = "log"
+      value = "error"
     }
 
     database_flags {
