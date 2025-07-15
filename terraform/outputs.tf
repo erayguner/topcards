@@ -80,7 +80,7 @@ output "instance_external_ips" {
 
 output "instance_internal_ips" {
   description = "The internal IP addresses of the compute instances"
-  value       = google_compute_instance.app_instance[*].network_interface.0.network_ip
+  value       = google_compute_instance.app_instance[*].network_interface[0].network_ip
 }
 
 output "instance_zones" {

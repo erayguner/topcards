@@ -1,6 +1,7 @@
 # Contributing to TopCards
 
-Thank you for your interest in contributing to TopCards! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to TopCards! This document provides guidelines and
+information for contributors.
 
 ## Table of Contents
 
@@ -15,7 +16,8 @@ Thank you for your interest in contributing to TopCards! This document provides 
 
 ## Code of Conduct
 
-By participating in this project, you agree to abide by our Code of Conduct. Please treat all participants with respect and create a welcoming environment for everyone.
+By participating in this project, you agree to abide by our Code of Conduct. Please treat all
+participants with respect and create a welcoming environment for everyone.
 
 ## Getting Started
 
@@ -29,6 +31,7 @@ By participating in this project, you agree to abide by our Code of Conduct. Ple
 ### Setup Development Environment
 
 1. **Fork the repository**
+
    ```bash
    # Fork on GitHub, then clone your fork
    git clone https://github.com/YOUR_USERNAME/topcards.git
@@ -36,11 +39,13 @@ By participating in this project, you agree to abide by our Code of Conduct. Ple
    ```
 
 2. **Set up upstream remote**
+
    ```bash
    git remote add upstream https://github.com/erayguner/topcards.git
    ```
 
 3. **Install development tools**
+
    ```bash
    # Install Terraform
    # Install Google Cloud SDK
@@ -68,6 +73,7 @@ Use descriptive branch names with prefixes:
 - `chore/` - Maintenance tasks
 
 Examples:
+
 - `feature/add-monitoring-dashboard`
 - `fix/database-connection-timeout`
 - `docs/update-terraform-readme`
@@ -75,6 +81,7 @@ Examples:
 ### Making Changes
 
 1. **Create a feature branch**
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -85,26 +92,28 @@ Examples:
    - Update documentation
 
 3. **Test your changes**
+
    ```bash
    # Terraform validation
    cd terraform
    terraform fmt -check -recursive
    terraform validate
-   
+
    # Security scanning
    checkov -f .
    tfsec .
    ```
 
 4. **Commit your changes**
+
    ```bash
    git add .
    git commit -m "feat: add new monitoring dashboard
-   
+
    - Add Grafana dashboard configuration
    - Include CloudWatch metrics integration
    - Update documentation
-   
+
    Closes #123"
    ```
 
@@ -121,6 +130,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 ```
 
 **Types:**
+
 - `feat:` - New features
 - `fix:` - Bug fixes
 - `docs:` - Documentation changes
@@ -135,12 +145,14 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 ### Before Submitting
 
 1. **Sync with upstream**
+
    ```bash
    git fetch upstream
    git rebase upstream/main
    ```
 
 2. **Run quality checks**
+
    ```bash
    # All checks should pass
    terraform fmt -check -recursive
@@ -157,6 +169,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 ### Submitting the PR
 
 1. **Push your branch**
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -188,6 +201,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 ### Terraform
 
 #### File Organization
+
 ```
 terraform/
 ├── main.tf              # Main configuration
@@ -204,11 +218,13 @@ terraform/
 ```
 
 #### Naming Conventions
+
 - **Resources**: `snake_case` with descriptive names
 - **Variables**: `snake_case` with validation rules
 - **Outputs**: `snake_case` with clear descriptions
 
 #### Code Style
+
 ```hcl
 # Good: Clear, descriptive resource names
 resource "google_compute_instance" "web_server" {
@@ -235,6 +251,7 @@ resource "google_compute_instance" "web_server" {
 ```
 
 #### Variables
+
 - Always include descriptions
 - Add validation rules where appropriate
 - Provide sensible defaults
@@ -257,12 +274,14 @@ variable "machine_type" {
 ### Documentation
 
 #### Inline Comments
+
 - Explain **why**, not **what**
 - Use comments for complex logic
 - Document security considerations
 - Explain business requirements
 
 #### README Structure
+
 - Clear overview and architecture
 - Prerequisites and setup
 - Configuration examples
@@ -310,6 +329,7 @@ variable "machine_type" {
 ### Terraform Testing
 
 1. **Validation Testing**
+
    ```bash
    terraform init
    terraform validate
@@ -317,6 +337,7 @@ variable "machine_type" {
    ```
 
 2. **Security Testing**
+
    ```bash
    checkov -f .
    tfsec .
@@ -392,6 +413,7 @@ If you need help:
 ## Recognition
 
 Contributors are recognized through:
+
 - GitHub contributor graphs
 - Release notes mentions
 - Documentation credits

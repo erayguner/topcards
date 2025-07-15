@@ -1,6 +1,7 @@
 # TopCards Infrastructure
 
-This directory contains the Terraform configuration for the TopCards application infrastructure on Google Cloud Platform.
+This directory contains the Terraform configuration for the TopCards application infrastructure on
+Google Cloud Platform.
 
 <!-- BEGIN_TF_DOCS -->
 <!-- END_TF_DOCS -->
@@ -8,6 +9,7 @@ This directory contains the Terraform configuration for the TopCards application
 ## 🏗️ Infrastructure Components
 
 ### Core Resources
+
 - **VPC Network** with custom subnet and security groups
 - **Compute Instances** with auto-scaling template
 - **Cloud Storage** buckets:
@@ -21,8 +23,9 @@ This directory contains the Terraform configuration for the TopCards application
 - **Firewall Rules** for controlled network access
 
 ### Security Features ⭐ **96% Checkov Compliance**
+
 - 🔐 **KMS Encryption** for storage and compute disks
-- 🗄️ **Private Database** access via VPC peering  
+- 🗄️ **Private Database** access via VPC peering
 - 🔑 **Secret Manager** for database credentials
 - 🛡️ **IAM** service accounts with minimal permissions
 - 🚫 **Network Security** with custom firewall rules
@@ -40,29 +43,35 @@ This directory contains the Terraform configuration for the TopCards application
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 1. **Google Cloud SDK** installed and configured
 2. **Terraform** >= 1.5 installed
 3. **GCP Project** with billing enabled
 4. **Required APIs** enabled (handled automatically)
 
 ### Setup
+
 1. **Clone and navigate to terraform directory**:
+
    ```bash
    cd terraform
    ```
 
 2. **Copy and configure variables**:
+
    ```bash
    cp terraform.tfvars.example terraform.tfvars
    # Edit terraform.tfvars with your project details
    ```
 
 3. **Initialize Terraform**:
+
    ```bash
    terraform init
    ```
 
 4. **Plan infrastructure**:
+
    ```bash
    terraform plan
    ```
@@ -74,24 +83,25 @@ This directory contains the Terraform configuration for the TopCards application
 
 ## 📋 Required Variables
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `project_id` | GCP Project ID | - | ✅ |
-| `region` | GCP Region | `us-central1` | ❌ |
-| `zone` | GCP Zone | `us-central1-a` | ❌ |
-| `environment` | Environment (dev/staging/prod) | `dev` | ❌ |
-| `machine_type` | VM machine type | `e2-micro` | ❌ |
-| `instance_count` | Number of instances | `1` | ❌ |
-| `enable_database` | Create Cloud SQL database | `true` | ❌ |
-| `db_version` | PostgreSQL version | `POSTGRES_16` | ❌ |
-| `db_tier` | Database machine type | `db-f1-micro` | ❌ |
-| `db_disk_size` | Database disk size (GB) | `20` | ❌ |
-| `db_name` | Application database name | `topcards_app` | ❌ |
-| `db_user` | Database user name | `app_user` | ❌ |
+| Variable          | Description                    | Default         | Required |
+| ----------------- | ------------------------------ | --------------- | -------- |
+| `project_id`      | GCP Project ID                 | -               | ✅       |
+| `region`          | GCP Region                     | `us-central1`   | ❌       |
+| `zone`            | GCP Zone                       | `us-central1-a` | ❌       |
+| `environment`     | Environment (dev/staging/prod) | `dev`           | ❌       |
+| `machine_type`    | VM machine type                | `e2-micro`      | ❌       |
+| `instance_count`  | Number of instances            | `1`             | ❌       |
+| `enable_database` | Create Cloud SQL database      | `true`          | ❌       |
+| `db_version`      | PostgreSQL version             | `POSTGRES_16`   | ❌       |
+| `db_tier`         | Database machine type          | `db-f1-micro`   | ❌       |
+| `db_disk_size`    | Database disk size (GB)        | `20`            | ❌       |
+| `db_name`         | Application database name      | `topcards_app`  | ❌       |
+| `db_user`         | Database user name             | `app_user`      | ❌       |
 
 ## 🔧 Configuration
 
 ### Environment-Specific Configs
+
 ```hcl
 # Development
 environment = "dev"
@@ -107,6 +117,7 @@ db_disk_size = 100
 ```
 
 ### Security Configuration
+
 - All storage buckets use **customer-managed encryption** keys
 - Compute instances have **encrypted boot disks**
 - Network access controlled via **firewall rules**
@@ -115,6 +126,7 @@ db_disk_size = 100
 ## 📊 Outputs
 
 After successful deployment, Terraform outputs:
+
 - **VPC Network** details
 - **Compute Instance** IPs and names
 - **Storage Bucket** URLs (app bucket and simple bucket)
@@ -127,12 +139,14 @@ After successful deployment, Terraform outputs:
 ## 🛡️ Security Compliance & Best Practices
 
 ### Security Hardening Results
+
 - ✅ **81 Checkov Security Checks Passed** (96% compliance)
 - ✅ **3 Minor Warnings** (false positives for log bucket)
 - ✅ **Zero Critical Security Issues**
 - ✅ **Zero High-Severity Issues**
 
 ### Applied Security Controls
+
 - ✅ **Encryption at rest** for all data (KMS)
 - ✅ **Network segmentation** with custom VPC
 - ✅ **Minimal IAM permissions** (principle of least privilege)
@@ -147,12 +161,14 @@ After successful deployment, Terraform outputs:
 - ✅ **SSH key management** security
 
 ### Security Standards Compliance
+
 - 🔒 **CIS Google Cloud Platform Benchmark**
 - 🛡️ **NIST Cybersecurity Framework**
 - 📋 **SOC 2 Type II Ready**
 - 🔐 **PCI DSS Level 1 Compatible**
 
 ### Additional Recommendations
+
 - 🔄 Use **Terraform state backend** (Cloud Storage)
 - 👥 Implement **workspace separation** per environment
 - 🔍 Enable **audit logging** and monitoring
@@ -181,6 +197,7 @@ terraform/
 ```
 
 ### File Organization Benefits
+
 - **Modular Structure**: Each resource type has its own file for better organization
 - **Easy Navigation**: Find specific resources quickly by file name
 - **Improved Maintainability**: Easier to review and modify specific components
@@ -215,6 +232,7 @@ terraform destroy
 
 ## 📞 Support
 
-- **Terraform Google Provider**: [Documentation](https://registry.terraform.io/providers/hashicorp/google/latest/docs)
+- **Terraform Google Provider**:
+  [Documentation](https://registry.terraform.io/providers/hashicorp/google/latest/docs)
 - **GCP Documentation**: [Cloud Documentation](https://cloud.google.com/docs)
 - **Security Best Practices**: [GCP Security](https://cloud.google.com/security/best-practices)

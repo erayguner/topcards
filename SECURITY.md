@@ -28,7 +28,7 @@ Instead, please:
 Please provide the following information in your report:
 
 - **Description**: Clear description of the vulnerability
-- **Impact**: Potential impact and attack scenarios  
+- **Impact**: Potential impact and attack scenarios
 - **Reproduction**: Step-by-step instructions to reproduce
 - **Environment**: Affected versions, configurations, or environments
 - **Evidence**: Screenshots, logs, or proof-of-concept code (if applicable)
@@ -45,6 +45,7 @@ Please provide the following information in your report:
 This project implements several security measures:
 
 #### Infrastructure Security
+
 - ✅ **Encryption at Rest**: All data encrypted using Google Cloud KMS
 - ✅ **Network Security**: Private subnets with restricted access
 - ✅ **IAM**: Least privilege access controls
@@ -52,6 +53,7 @@ This project implements several security measures:
 - ✅ **Secret Management**: Google Secret Manager integration
 
 #### Code Security
+
 - ✅ **Secret Scanning**: Multiple tools (TruffleHog, Gitleaks, Semgrep)
 - ✅ **Dependency Scanning**: OWASP dependency vulnerability checks
 - ✅ **Infrastructure Scanning**: Checkov, TFSec, Terrascan
@@ -59,6 +61,7 @@ This project implements several security measures:
 - ✅ **License Compliance**: Automated license validation
 
 #### Development Security
+
 - ✅ **Automated Scanning**: Pre-commit and CI/CD security checks
 - ✅ **Code Review**: Required reviews for all changes
 - ✅ **Branch Protection**: Protected main branch with required checks
@@ -82,6 +85,7 @@ TF_VAR_project_id=your-project-id
 ### Terraform Security
 
 #### Secure State Management
+
 ```hcl
 terraform {
   backend "gcs" {
@@ -92,7 +96,9 @@ terraform {
 ```
 
 #### KMS Encryption
+
 All sensitive data is encrypted using Google Cloud KMS:
+
 ```hcl
 resource "google_kms_crypto_key" "terraform_state_bucket" {
   name     = "terraform-state-bucket"
@@ -103,28 +109,31 @@ resource "google_kms_crypto_key" "terraform_state_bucket" {
 ### Network Security
 
 #### Private Subnets
+
 ```hcl
 resource "google_compute_subnetwork" "private" {
   name          = "private-subnet"
   ip_cidr_range = "10.0.1.0/24"
   region        = var.region
   network       = google_compute_network.vpc.id
-  
+
   private_ip_google_access = true
 }
 ```
 
 #### Firewall Rules
+
 Minimal firewall rules with explicit deny-all default:
+
 ```hcl
 resource "google_compute_firewall" "deny_all" {
   name    = "deny-all"
   network = google_compute_network.vpc.name
-  
+
   deny {
     protocol = "all"
   }
-  
+
   priority = 65534
 }
 ```
@@ -143,7 +152,7 @@ Security updates are released as:
 
 1. **Critical**: Immediate patch release
 2. **High**: Patch within 7 days
-3. **Medium**: Patch within 30 days  
+3. **Medium**: Patch within 30 days
 4. **Low**: Included in next regular release
 
 ## Compliance
@@ -164,7 +173,7 @@ Our CI/CD pipeline includes:
 ```yaml
 # Security scanning tools
 - TruffleHog: Secret detection
-- Gitleaks: Git secret scanning  
+- Gitleaks: Git secret scanning
 - Semgrep: Code security analysis
 - Checkov: Infrastructure security
 - TFSec: Terraform security
@@ -200,9 +209,8 @@ For security-related questions or concerns:
 
 We recognize security researchers who help improve our security:
 
-*No security researchers have been credited yet. Be the first!*
+_No security researchers have been credited yet. Be the first!_
 
 ---
 
-**Last Updated**: 2025-07-15
-**Version**: 1.0
+**Last Updated**: 2025-07-15 **Version**: 1.0
