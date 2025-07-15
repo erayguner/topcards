@@ -9,6 +9,10 @@ on:
     # Run daily at 02:00 UTC
     - cron: '0 2 * * *'
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   # CodeQL analysis moved to security-policy.yml to avoid duplication
 
@@ -32,7 +36,7 @@ jobs:
         GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
     - name: Run TruffleHog
-      uses: trufflesecurity/trufflehog@main
+      uses: trufflesecurity/trufflehog@v3.63.2
       with:
         path: ./
         base: main
