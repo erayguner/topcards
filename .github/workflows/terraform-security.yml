@@ -30,7 +30,7 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.5.0
+          terraform_version: ~1.5
 
       - name: Terraform Format Check
         run: terraform fmt -check -recursive terraform/
@@ -64,8 +64,8 @@ jobs:
           # Install TFSec
           curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
 
-          # Run TFSec scan on terraform directory from repository root
-          tfsec --format sarif --out tfsec-results.sarif ./terraform || echo "TFSec scan completed with warnings"
+          # Run TFSec scan on terraform directory
+          tfsec --format sarif --out tfsec-results.sarif terraform/ || echo "TFSec scan completed with warnings"
 
           # Ensure SARIF file exists in repository root
           if [ ! -f tfsec-results.sarif ]; then

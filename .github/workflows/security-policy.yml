@@ -163,9 +163,8 @@ jobs:
           path: results.sarif
           retention-days: 5
 
-      - name: Upload scorecard results
-        uses: actions/upload-artifact@v4
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          name: ossf-scorecard-results
-          path: results.sarif
-          retention-days: 30
+          sarif_file: results.sarif
+          category: security-scorecard

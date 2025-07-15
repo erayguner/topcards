@@ -19,7 +19,7 @@ permissions:
   actions: read
 
 env:
-  TF_VERSION: '1.5.0'
+  TF_VERSION: '~1.5'
   TF_IN_AUTOMATION: true
   TF_CLI_ARGS: '-no-color'
 
@@ -125,7 +125,7 @@ jobs:
           # Install TFSec
           curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
 
-          # Run TFSec scan (we're already in terraform/ directory)
+          # Run TFSec scan in terraform directory (we're already in terraform/ directory)
           tfsec --format sarif --out tfsec-results.sarif . || echo "TFSec scan completed with warnings"
 
           # Ensure SARIF file exists in current directory

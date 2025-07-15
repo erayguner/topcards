@@ -361,7 +361,7 @@ variable "machine_type" {
    - Verify cleanup completeness
    - Document manual cleanup steps
 
-## Documentation
+## Documentation Standards
 
 ### Code Documentation
 
@@ -377,7 +377,7 @@ variable "machine_type" {
 - **Runbooks** for operational procedures
 - **Security notes** for security-related changes
 
-### Documentation Standards
+### Documentation Requirements
 
 - Use clear, concise language
 - Include examples and code snippets
