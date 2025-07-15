@@ -31,35 +31,35 @@ provider "google-beta" {
 # Enable required APIs
 resource "google_project_service" "compute_api" {
   service = "compute.googleapis.com"
-  
+
   disable_dependent_services = true
   disable_on_destroy         = false
 }
 
 resource "google_project_service" "storage_api" {
   service = "storage.googleapis.com"
-  
+
   disable_dependent_services = true
   disable_on_destroy         = false
 }
 
 resource "google_project_service" "iam_api" {
   service = "iam.googleapis.com"
-  
+
   disable_dependent_services = true
   disable_on_destroy         = false
 }
 
 resource "google_project_service" "sql_api" {
   service = "sqladmin.googleapis.com"
-  
+
   disable_dependent_services = true
   disable_on_destroy         = false
 }
 
 resource "google_project_service" "networking_api" {
   service = "servicenetworking.googleapis.com"
-  
+
   disable_dependent_services = true
   disable_on_destroy         = false
 }
@@ -76,7 +76,7 @@ resource "google_storage_bucket" "app_bucket" {
 
   # Security settings
   uniform_bucket_level_access = true
-  
+
   # Versioning
   versioning {
     enabled = true
@@ -100,8 +100,8 @@ resource "google_kms_crypto_key" "bucket_key" {
   name     = "bucket-encryption-key"
   key_ring = google_kms_key_ring.app_keyring.id
 
-  purpose          = "ENCRYPT_DECRYPT"
-  rotation_period  = "7776000s" # 90 days
+  purpose         = "ENCRYPT_DECRYPT"
+  rotation_period = "7776000s" # 90 days
 
   lifecycle {
     prevent_destroy = true
@@ -180,7 +180,7 @@ resource "google_compute_instance_template" "app_template" {
     boot         = true
     disk_size_gb = 20
     disk_type    = "pd-standard"
-    
+
     # Encryption
     disk_encryption_key {
       kms_key_self_link = google_kms_crypto_key.bucket_key.id
@@ -191,7 +191,7 @@ resource "google_compute_instance_template" "app_template" {
   network_interface {
     network    = google_compute_network.vpc_network.self_link
     subnetwork = google_compute_subnetwork.subnet.self_link
-    
+
     # External IP for internet access
     access_config {
       network_tier = "PREMIUM"
@@ -206,7 +206,7 @@ resource "google_compute_instance_template" "app_template" {
 
   # Security and startup
   tags = ["web-server", "ssh-access"]
-  
+
   metadata = {
     startup-script = file("${path.module}/startup-script.sh")
   }
@@ -257,7 +257,7 @@ resource "google_compute_instance" "app_instance" {
   network_interface {
     network    = google_compute_network.vpc_network.self_link
     subnetwork = google_compute_subnetwork.subnet.self_link
-    
+
     access_config {
       network_tier = "PREMIUM"
     }
@@ -339,9 +339,9 @@ resource "google_sql_database_instance" "postgres_instance" {
     # IP configuration for private access
     ip_configuration {
       ipv4_enabled                                  = false
-      private_network                              = google_compute_network.vpc_network.id
+      private_network                               = google_compute_network.vpc_network.id
       enable_private_path_for_google_cloud_services = true
-      require_ssl                                  = true
+      require_ssl                                   = true
 
       authorized_networks {
         name  = "internal-subnet"
@@ -419,7 +419,7 @@ resource "google_sql_ssl_cert" "client_cert" {
 # Store database password in Secret Manager
 resource "google_project_service" "secretmanager_api" {
   service = "secretmanager.googleapis.com"
-  
+
   disable_dependent_services = true
   disable_on_destroy         = false
 }

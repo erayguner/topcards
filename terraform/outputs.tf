@@ -128,10 +128,10 @@ output "database_password_secret_name" {
 output "database_ssl_cert" {
   description = "SSL certificate information for database connection"
   value = {
-    cert            = google_sql_ssl_cert.client_cert.cert
-    common_name     = google_sql_ssl_cert.client_cert.common_name
-    create_time     = google_sql_ssl_cert.client_cert.create_time
-    expiration_time = google_sql_ssl_cert.client_cert.expiration_time
+    cert             = google_sql_ssl_cert.client_cert.cert
+    common_name      = google_sql_ssl_cert.client_cert.common_name
+    create_time      = google_sql_ssl_cert.client_cert.create_time
+    expiration_time  = google_sql_ssl_cert.client_cert.expiration_time
     sha1_fingerprint = google_sql_ssl_cert.client_cert.sha1_fingerprint
   }
   sensitive = true
