@@ -72,7 +72,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_allowed_cidr_blocks"></a> [allowed\_cidr\_blocks](#input\_allowed\_cidr\_blocks) | CIDR blocks allowed to access the infrastructure | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
+| <a name="input_allowed_cidr_blocks"></a> [allowed\_cidr\_blocks](#input\_allowed\_cidr\_blocks) | CIDR blocks allowed to access the infrastructure | `list(string)` | <pre>[<br>  "0.0.0.0/0"<br>]</pre> | no |
 | <a name="input_db_disk_size"></a> [db\_disk\_size](#input\_db\_disk\_size) | Disk size in GB for Cloud SQL instance | `number` | `20` | no |
 | <a name="input_db_name"></a> [db\_name](#input\_db\_name) | Name of the application database | `string` | `"topcards_app"` | no |
 | <a name="input_db_tier"></a> [db\_tier](#input\_db\_tier) | Machine type for Cloud SQL instance | `string` | `"db-f1-micro"` | no |
@@ -82,7 +82,7 @@ No modules.
 | <a name="input_enable_database"></a> [enable\_database](#input\_enable\_database) | Whether to create Cloud SQL database resources | `bool` | `true` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | Environment name (dev, staging, prod) | `string` | `"dev"` | no |
 | <a name="input_instance_count"></a> [instance\_count](#input\_instance\_count) | Number of compute instances to create | `number` | `1` | no |
-| <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to resources | `map(string)` | <pre>{<br/>  "environment": "dev",<br/>  "managed-by": "terraform",<br/>  "project": "topcards"<br/>}</pre> | no |
+| <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to resources | `map(string)` | <pre>{<br>  "environment": "dev",<br>  "managed-by": "terraform",<br>  "project": "topcards"<br>}</pre> | no |
 | <a name="input_machine_type"></a> [machine\_type](#input\_machine\_type) | Machine type for compute instances | `string` | `"e2-micro"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The GCP project ID | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | The GCP region for resources | `string` | `"us-central1"` | no |
