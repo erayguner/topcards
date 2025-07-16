@@ -1,12 +1,13 @@
+---
 name: Terraform Security Scanning
 
 on:
   push:
-    branches: [ main, develop ]
-    paths: 
+    branches: [main, develop]
+    paths:
       - 'terraform/**'
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'terraform/**'
 
@@ -24,90 +25,94 @@ jobs:
       security-events: write
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: 1.5.0
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ~1.5
 
-    - name: Terraform Format Check
-      run: terraform fmt -check -recursive terraform/
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive terraform/
 
-    - name: Terraform Init
-      run: terraform -chdir=terraform init -backend=false
+      - name: Terraform Init
+        run: terraform -chdir=terraform init -backend=false
 
-    - name: Terraform Validate
-      run: terraform -chdir=terraform validate
+      - name: Terraform Validate
+        run: terraform -chdir=terraform validate
 
-    - name: Run Checkov
-      id: checkov
-      uses: bridgecrewio/checkov-action@v12.2715.0
-      with:
-        directory: terraform/
-        framework: terraform
-        output_format: sarif
-        output_file_path: checkov-results.sarif
-        soft_fail: true
+      - name: Run Checkov
+        id: checkov
+        uses: bridgecrewio/checkov-action@v12.2715.0
+        with:
+          directory: terraform/
+          framework: terraform
+          output_format: sarif
+          output_file_path: checkov-results.sarif
+          soft_fail: true
 
-    - name: Upload Checkov results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: checkov-results
-        path: checkov-results.sarif
-        retention-days: 30
+      - name: Upload Checkov results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: checkov-results
+          path: checkov-results.sarif
+          retention-days: 30
 
-    - name: Run TFSec Security Scan
-      run: |
-        # Install TFSec
-        curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
-        
-        # Run TFSec scan on terraform directory from repository root
-        tfsec --format sarif --out tfsec-results.sarif ./terraform || echo "TFSec scan completed with warnings"
-        
-        # Ensure SARIF file exists in repository root
-        if [ ! -f tfsec-results.sarif ]; then
-          echo '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json","runs":[{"tool":{"driver":{"name":"tfsec","version":"1.0.0"}},"results":[]}]}' > tfsec-results.sarif
-        fi
-        
-        # Verify file exists and has content
-        ls -la tfsec-results.sarif
-        echo "SARIF file size: $(wc -c < tfsec-results.sarif) bytes"
-        echo "Current working directory: $(pwd)"
-        echo "Files in current directory:"
-        ls -la .
-        
-    - name: Upload TFSec SARIF results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: tfsec-results
-        path: tfsec-results.sarif
-        retention-days: 30
+      - name: Run TFSec Security Scan
+        run: |
+          # Install TFSec
+          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
 
-    - name: Run Terrascan Security Scan
-      run: |
-        # Create terrascan results directory
-        mkdir -p terrascan-results
-        
-        # Run Terrascan with Docker
-        docker run --rm -v "$(pwd)/terraform:/iac" tenable/terrascan scan -i terraform -t gcp -o sarif > terrascan.sarif 2>/dev/null || echo "Terrascan scan completed with warnings"
-        
-        # Ensure SARIF file exists and is valid
-        if [ ! -f terrascan.sarif ] || [ ! -s terrascan.sarif ]; then
-          echo '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json","runs":[{"tool":{"driver":{"name":"terrascan","version":"1.0.0"}},"results":[]}]}' > terrascan.sarif
-        fi
-        
-        # Verify file
-        ls -la terrascan.sarif
-        echo "Terrascan SARIF file size: $(wc -c < terrascan.sarif) bytes"
+          # Run TFSec scan on terraform directory
+          tfsec --format sarif --out tfsec-results.sarif terraform/ || echo "TFSec scan completed with warnings"
 
-    - name: Upload Terrascan SARIF results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: terrascan-results
-        path: terrascan.sarif
-        retention-days: 30
+          # Ensure SARIF file exists in repository root
+          if [ ! -f tfsec-results.sarif ]; then
+            echo '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json",\
+"runs":[{"tool":{"driver":{"name":"tfsec","version":"1.0.0"}},"results":[]}]}' > tfsec-results.sarif
+          fi
+
+          # Verify file exists and has content
+          ls -la tfsec-results.sarif
+          echo "SARIF file size: $(wc -c < tfsec-results.sarif) bytes"
+          echo "Current working directory: $(pwd)"
+          echo "Files in current directory:"
+          ls -la .
+
+      - name: Upload TFSec SARIF results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tfsec-results
+          path: tfsec-results.sarif
+          retention-days: 30
+
+      - name: Run Terrascan Security Scan
+        run: |
+          # Create terrascan results directory
+          mkdir -p terrascan-results
+
+          # Run Terrascan with Docker
+          docker run --rm -v "$(pwd)/terraform:/iac" tenable/terrascan scan \
+            -i terraform -t gcp -o sarif > terrascan.sarif 2>/dev/null \
+            || echo "Terrascan scan completed with warnings"
+
+          # Ensure SARIF file exists and is valid
+          if [ ! -f terrascan.sarif ] || [ ! -s terrascan.sarif ]; then
+            echo '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json",\
+"runs":[{"tool":{"driver":{"name":"terrascan","version":"1.0.0"}},"results":[]}]}' > terrascan.sarif
+          fi
+
+          # Verify file
+          ls -la terrascan.sarif
+          echo "Terrascan SARIF file size: $(wc -c < terrascan.sarif) bytes"
+
+      - name: Upload Terrascan SARIF results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: terrascan-results
+          path: terrascan.sarif
+          retention-days: 30

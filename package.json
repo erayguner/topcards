@@ -1,0 +1,35 @@
+{
+  "name": "topcards",
+  "version": "1.0.0",
+  "description": "A secure, well-tested application with comprehensive CI/CD pipelines.",
+  "main": "index.js",
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "format:yaml": "prettier --write .github/workflows/*.yml",
+    "lint:yaml": "yamllint .github/workflows/ -c .github/configs/yamllint.yml",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erayguner/topcards.git"
+  },
+  "keywords": [
+    "terraform",
+    "gcp",
+    "infrastructure",
+    "security",
+    "ci-cd"
+  ],
+  "author": "Eray Guner",
+  "license": "MIT",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/erayguner/topcards/issues"
+  },
+  "homepage": "https://github.com/erayguner/topcards#readme",
+  "devDependencies": {
+    "prettier": "^3.0.0",
+    "prettier-plugin-sh": "^0.14.0"
+  }
+}

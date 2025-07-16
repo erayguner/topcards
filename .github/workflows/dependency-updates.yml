@@ -1,0 +1,182 @@
+---
+name: Dependency Updates
+
+on:
+  schedule:
+    # Run weekly on Mondays at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      force_update:
+        description: 'Force update all dependencies'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+  security-events: write
+
+jobs:
+  terraform-providers:
+    name: Update Terraform Providers
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ~1.5
+
+      - name: Check for provider updates
+        id: provider-check
+        run: |
+          cd terraform
+
+          # Initialize to download current providers
+          terraform init -backend=false
+
+          # Get current provider versions
+          terraform version -json > current_versions.json
+
+          # Check for updates by upgrading
+          terraform init -upgrade -backend=false
+          terraform version -json > new_versions.json
+
+          # Compare versions
+          if ! cmp -s current_versions.json new_versions.json; then
+            echo "updates_available=true" >> $GITHUB_OUTPUT
+            echo "Provider updates are available"
+          else
+            echo "updates_available=false" >> $GITHUB_OUTPUT
+            echo "No provider updates available"
+          fi
+
+      - name: Create provider update PR
+        if: steps.provider-check.outputs.updates_available == 'true'
+        run: |
+          # Create a new branch for updates
+          git checkout -b automated/terraform-provider-updates-$(date +%Y%m%d)
+
+          cd terraform
+
+          # Run init with upgrade again to ensure lock file is updated
+          terraform init -upgrade -backend=false
+
+          # Add changes
+          git add .terraform.lock.hcl
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: Update Terraform provider versions
+
+          Automated update of Terraform providers to latest compatible versions.
+
+          🤖 Generated with [Claude Code](https://claude.ai/code)
+
+          Co-Authored-By: Claude <noreply@anthropic.com>"
+
+          # Push the branch
+          git push origin HEAD
+
+          # Create PR using GitHub CLI
+          gh pr create \
+            --title "chore: Update Terraform provider versions" \
+            --body "Automated update of Terraform providers to latest
+            compatible versions" \
+            --head automated/terraform-provider-updates-$(date +%Y%m%d) \
+            --base main \
+            --label "dependencies" \
+            --label "terraform" \
+            --label "automated"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  github-actions:
+    name: Update GitHub Actions
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update GitHub Actions
+        uses: renovatebot/github-action@v40.1.11
+        with:
+          configurationFile: .github/renovate.json
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  security-updates:
+    name: Security Updates Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run security audit
+        run: |
+          # Check for known vulnerabilities in GitHub Actions
+          echo "Checking GitHub Actions for known vulnerabilities..."
+
+          # Parse workflow files for action versions
+          find .github/workflows -name "*.yml" -o -name "*.yaml" | while read file; do
+            echo "Checking $file"
+            # Extract action references and versions
+            grep -E "uses: .+@v?[0-9]" "$file" || true
+          done
+
+      - name: Check Terraform security
+        run: |
+          echo "Checking Terraform configuration for security issues..."
+
+          # Install security scanners
+          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+          pip install checkov
+
+          cd terraform
+
+          # Run security scans
+          tfsec . --format json --out tfsec-results.json || true
+          checkov -f . --framework terraform --output json \
+            --output-file checkov-results.json || true
+
+          # Check for high/critical findings
+          if [ -f tfsec-results.json ]; then
+            high_critical=$(jq '.results[] | select(.severity == "HIGH" or .severity == "CRITICAL")' \
+              tfsec-results.json | wc -l)
+            if [ "$high_critical" -gt 0 ]; then
+              echo "Found $high_critical high/critical security issues"
+              exit 1
+            fi
+          fi
+
+  dependency-summary:
+    name: Dependency Summary
+    runs-on: ubuntu-latest
+    needs: [terraform-providers, github-actions, security-updates]
+    if: always()
+
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "## Dependency Update Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status | Notes |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Terraform Providers | ${{ needs.terraform-providers.result }} |
+            Check for provider version updates |" >> $GITHUB_STEP_SUMMARY
+          echo "| GitHub Actions | ${{ needs.github-actions.result }} |
+            Update action versions |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Updates | ${{ needs.security-updates.result }} |
+            Security vulnerability scan |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔍 Review any created PRs before merging" >> $GITHUB_STEP_SUMMARY
+          echo "🛡️ Ensure all security checks pass" >> $GITHUB_STEP_SUMMARY

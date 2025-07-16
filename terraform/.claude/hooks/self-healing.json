@@ -1,0 +1,62 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "^Bash$",
+        "command": "npx ruv-swarm hook post-bash --exit-code '${tool.result.exitCode}' --auto-recover --error-pattern '${tool.result.stderr}'"
+      },
+      {
+        "matcher": "^terraform",
+        "command": "npx ruv-swarm hook terraform-monitor --action '${tool.name}' --result '${tool.result}' --auto-fix"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": ".*",
+        "command": "npx ruv-swarm hook pre-operation --tool '${tool.name}' --check-dependencies"
+      }
+    ],
+    "OnError": [
+      {
+        "matcher": "command not found",
+        "command": "npx ruv-swarm hook suggest-alternative --missing-command '${error.command}' --auto-install"
+      },
+      {
+        "matcher": "Required plugins are not installed",
+        "command": "npx ruv-swarm hook terraform-auto-init --directory '${error.directory}'"
+      },
+      {
+        "matcher": "ModuleNotFoundError|Cannot find module",
+        "command": "npx ruv-swarm hook install-dependencies --package-manager auto --missing '${error.module}'"
+      }
+    ]
+  },
+  "self_healing": {
+    "enabled": true,
+    "auto_recovery": true,
+    "learning_mode": true,
+    "max_retry_attempts": 3,
+    "recovery_timeout_ms": 30000,
+    "notification_level": "info"
+  },
+  "patterns": {
+    "terraform_init_required": {
+      "pattern": "Required plugins are not installed",
+      "recovery": "terraform init",
+      "confidence": 0.95,
+      "auto_apply": true
+    },
+    "missing_dependency": {
+      "pattern": "(command not found|ModuleNotFoundError|Cannot find module)",
+      "recovery": "auto_install_dependency",
+      "confidence": 0.85,
+      "auto_apply": true
+    },
+    "syntax_error": {
+      "pattern": "(SyntaxError|Unexpected token)",
+      "recovery": "suggest_fix_with_analysis",
+      "confidence": 0.70,
+      "auto_apply": false
+    }
+  }
+}

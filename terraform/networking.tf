@@ -75,8 +75,8 @@ resource "google_compute_firewall" "allow_ssh" {
     ports    = ["22"]
   }
 
-  # Restrict SSH access to internal network only for security
-  source_ranges = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+  # Restrict SSH access to specified CIDR blocks for security
+  source_ranges = var.allowed_cidr_blocks
   target_tags   = ["ssh-access"]
 }
 

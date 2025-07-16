@@ -1,10 +1,11 @@
+---
 name: Security Policy Enforcement
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -16,70 +17,76 @@ jobs:
     name: 'OWASP Dependency Check'
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Run OWASP Dependency Check
-      uses: dependency-check/Dependency-Check_Action@v1.1.0
-      continue-on-error: true
-      with:
-        project: 'topcards'
-        path: '.'
-        format: 'ALL'
-        args: >
-          --enableRetired
-          --failOnCVSS 8
-          --exclude "**/node_modules/**"
-          --exclude "**/venv/**"
-          --exclude "**/.git/**"
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@v1.1.0
+        continue-on-error: true
+        with:
+          project: 'topcards'
+          path: '.'
+          format: 'ALL'
+          args: >
+            --enableRetired
+            --failOnCVSS 8
+            --exclude "**/node_modules/**"
+            --exclude "**/venv/**"
+            --exclude "**/.git/**"
 
-    - name: Upload Dependency Check results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: dependency-check-report
-        path: reports/
-        retention-days: 30
+      - name: Upload Dependency Check results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: reports/
+          retention-days: 30
 
   license-check:
     name: 'License Compliance Check'
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      if: ${{ hashFiles('package.json') != '' }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
+      - name: Set up Node.js
+        if: ${{ hashFiles('package.json') != '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-    - name: Check Node.js licenses
-      if: ${{ hashFiles('package.json') != '' }}
-      continue-on-error: true
-      run: |
-        npm install -g license-checker
-        if [ -f package.json ]; then
-          npm install || echo "npm install failed, continuing..."
-          license-checker --onlyAllow 'MIT;BSD;ISC;Apache-2.0;Unlicense;WTFPL;CC0-1.0' --excludePrivatePackages || echo "License check completed with warnings"
-        fi
+      - name: Check Node.js licenses
+        if: ${{ hashFiles('package.json') != '' }}
+        continue-on-error: true
+        run: |
+          npm install -g license-checker
+          if [ -f package.json ]; then
+            npm install || echo "npm install failed, continuing..."
+            license-checker --onlyAllow 'MIT;BSD;ISC;Apache-2.0;Unlicense;WTFPL;CC0-1.0' \
+              --excludePrivatePackages || echo "License check completed with warnings"
+          fi
 
-    - name: Set up Python
-      if: ${{ hashFiles('requirements.txt') != '' || hashFiles('Pipfile') != '' || hashFiles('pyproject.toml') != '' }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+      - name: Set up Python
+        if: >-
+          ${{ hashFiles('requirements.txt') != '' || hashFiles('Pipfile') != ''
+          || hashFiles('pyproject.toml') != '' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-    - name: Check Python licenses
-      if: ${{ hashFiles('requirements.txt') != '' || hashFiles('Pipfile') != '' || hashFiles('pyproject.toml') != '' }}
-      continue-on-error: true
-      run: |
-        pip install pip-licenses || echo "pip-licenses install failed, continuing..."
-        if [ -f requirements.txt ]; then
-          pip install -r requirements.txt || echo "requirements.txt install failed, continuing..."
-        fi
-        pip-licenses --allow-only="MIT License;BSD License;Apache Software License;ISC License;CC0 License" || echo "License check completed with warnings"
+      - name: Check Python licenses
+        if: >-
+          ${{ hashFiles('requirements.txt') != '' || hashFiles('Pipfile') != ''
+          || hashFiles('pyproject.toml') != '' }}
+        continue-on-error: true
+        run: |
+          pip install pip-licenses || echo "pip-licenses install failed, continuing..."
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt || echo "requirements.txt install failed, continuing..."
+          fi
+          pip-licenses --allow-only="MIT License;BSD License;Apache Software License;ISC License;CC0 License" \
+            || echo "License check completed with warnings"
 
   # CodeQL analysis removed as requested
 
@@ -89,51 +96,51 @@ jobs:
     if: ${{ hashFiles('Dockerfile*') != '' }}
     continue-on-error: true
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Build Docker image
-      continue-on-error: true
-      run: |
-        if [ -f Dockerfile ]; then
-          docker build -t security-scan:latest . || echo "Docker build failed, continuing with filesystem scan"
-        fi
+      - name: Build Docker image
+        continue-on-error: true
+        run: |
+          if [ -f Dockerfile ]; then
+            docker build -t security-scan:latest . || echo "Docker build failed, continuing with filesystem scan"
+          fi
 
-    - name: Run Trivy vulnerability scanner on filesystem
-      uses: aquasecurity/trivy-action@0.16.1
-      continue-on-error: true
-      with:
-        scan-type: 'fs'
-        scan-ref: '.'
-        format: 'sarif'
-        output: 'trivy-fs-results.sarif'
+      - name: Run Trivy vulnerability scanner on filesystem
+        uses: aquasecurity/trivy-action@0.16.1
+        continue-on-error: true
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-fs-results.sarif'
 
-    - name: Run Trivy vulnerability scanner on image
-      if: ${{ hashFiles('Dockerfile') != '' }}
-      uses: aquasecurity/trivy-action@0.16.1
-      continue-on-error: true
-      with:
-        image-ref: 'security-scan:latest'
-        format: 'sarif'
-        output: 'trivy-image-results.sarif'
+      - name: Run Trivy vulnerability scanner on image
+        if: ${{ hashFiles('Dockerfile') != '' }}
+        uses: aquasecurity/trivy-action@0.16.1
+        continue-on-error: true
+        with:
+          image-ref: 'security-scan:latest'
+          format: 'sarif'
+          output: 'trivy-image-results.sarif'
 
-    - name: Upload Trivy filesystem scan results
-      if: always()
-      uses: actions/upload-artifact@v4
-      continue-on-error: true
-      with:
-        name: trivy-fs-results
-        path: 'trivy-fs-results.sarif'
-        retention-days: 30
+      - name: Upload Trivy filesystem scan results
+        if: always()
+        uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: trivy-fs-results
+          path: 'trivy-fs-results.sarif'
+          retention-days: 30
 
-    - name: Upload Trivy image scan results
-      if: ${{ hashFiles('Dockerfile') != '' && always() }}
-      uses: actions/upload-artifact@v4
-      continue-on-error: true
-      with:
-        name: trivy-image-results
-        path: 'trivy-image-results.sarif'
-        retention-days: 30
+      - name: Upload Trivy image scan results
+        if: ${{ hashFiles('Dockerfile') != '' && always() }}
+        uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: trivy-image-results
+          path: 'trivy-image-results.sarif'
+          retention-days: 30
 
   security-scorecard:
     name: 'OSSF Scorecard'
@@ -144,28 +151,27 @@ jobs:
       actions: read
       contents: read
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        persist-credentials: false
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
-    - name: Run analysis
-      uses: ossf/scorecard-action@v2.3.1
-      with:
-        results_file: results.sarif
-        results_format: sarif
-        publish_results: true
+      - name: Run analysis
+        uses: ossf/scorecard-action@v2.3.1
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: SARIF file
-        path: results.sarif
-        retention-days: 5
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SARIF file
+          path: results.sarif
+          retention-days: 5
 
-    - name: Upload scorecard results
-      uses: actions/upload-artifact@v4
-      with:
-        name: ossf-scorecard-results
-        path: results.sarif
-        retention-days: 30
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+          category: security-scorecard
