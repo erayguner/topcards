@@ -19,10 +19,15 @@ jobs:
   terraform-quality:
     name: Terraform Code Quality
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -56,8 +61,11 @@ jobs:
           working-dir: terraform
           output-file: README.md
           output-method: inject
-          git-push: false
-          fail-on-diff: true
+          git-push: true
+          fail-on-diff: false
+          git-commit-message: 'docs: update terraform documentation [skip ci]'
+          git-push-user-name: 'github-actions[bot]'
+          git-push-user-email: 'github-actions[bot]@users.noreply.github.com'
 
   documentation-quality:
     name: Documentation Quality
