@@ -93,17 +93,33 @@ jobs:
   container-security:
     name: 'Container Security Scan'
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('Dockerfile*') != '' }}
     continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Docker image
-        continue-on-error: true
+      - name: Check for Docker files
+        id: docker-check
         run: |
           if [ -f Dockerfile ]; then
-            docker build -t security-scan:latest . || echo "Docker build failed, continuing with filesystem scan"
+            echo "dockerfile-exists=true" >> $GITHUB_OUTPUT
+            echo "Docker files found"
+          else
+            echo "dockerfile-exists=false" >> $GITHUB_OUTPUT
+            echo "No Docker files found"
+          fi
+
+      - name: Build Docker image
+        id: docker-build
+        if: steps.docker-check.outputs.dockerfile-exists == 'true'
+        continue-on-error: true
+        run: |
+          if docker build -t security-scan:latest .; then
+            echo "build-success=true" >> $GITHUB_OUTPUT
+            echo "Docker build successful"
+          else
+            echo "build-success=false" >> $GITHUB_OUTPUT
+            echo "Docker build failed, continuing with filesystem scan"
           fi
 
       - name: Run Trivy vulnerability scanner on filesystem
@@ -116,7 +132,7 @@ jobs:
           output: 'trivy-fs-results.sarif'
 
       - name: Run Trivy vulnerability scanner on image
-        if: ${{ hashFiles('Dockerfile') != '' }}
+        if: steps.docker-build.outputs.build-success == 'true'
         uses: aquasecurity/trivy-action@0.16.1
         continue-on-error: true
         with:
@@ -134,7 +150,7 @@ jobs:
           retention-days: 30
 
       - name: Upload Trivy image scan results
-        if: ${{ hashFiles('Dockerfile') != '' && always() }}
+        if: steps.docker-build.outputs.build-success == 'true' && always()
         uses: actions/upload-artifact@v4
         continue-on-error: true
         with:
