@@ -94,3 +94,9 @@ claude.md
 CLAUDE.md
 claude-*
 .claude-*
+
+# Swarm files (ruv-swarm MCP)
+.swarm/
+.swarm*
+swarm-*
+.swarm-*
