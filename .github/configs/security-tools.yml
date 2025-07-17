@@ -1,0 +1,298 @@
+---
+# Security Tools Configuration
+# Central configuration for all security scanning tools
+
+# Tool configurations
+tools:
+  # Secret scanning tools
+  secrets:
+    gitleaks:
+      enabled: true
+      version: "v8.18.0"
+      config: ".gitleaks.toml"
+      fail_on_detection: true
+
+    trufflehog:
+      enabled: true
+      version: "3.63.2"
+      args: "--debug --only-verified"
+      fail_on_detection: true
+
+    semgrep:
+      enabled: true
+      rules: "auto"
+      output_format: "sarif"
+      fail_on_error: false
+
+    detect-secrets:
+      enabled: true
+      baseline_file: ".secrets.baseline"
+      fail_on_unaudited: false
+
+  # Dependency scanning tools
+  dependencies:
+    owasp-dependency-check:
+      enabled: true
+      version: "main"
+      fail_on_cvss: 8.0
+      formats: ["ALL"]
+      excludes:
+        - "**/node_modules/**"
+        - "**/venv/**"
+        - "**/.git/**"
+
+    safety:
+      enabled: true
+      fail_on_vulnerability: false
+
+    bandit:
+      enabled: true
+      output_format: "json"
+      fail_on_high: false
+
+    retire-js:
+      enabled: false
+
+    npm-audit:
+      enabled: true
+      audit_level: "moderate"
+
+  # Infrastructure scanning tools
+  infrastructure:
+    checkov:
+      enabled: true
+      version: "2.4.0"
+      framework: "terraform"
+      output_format: "sarif"
+      soft_fail: true
+
+    tfsec:
+      enabled: true
+      output_format: "sarif"
+      fail_on_error: false
+
+    terrascan:
+      enabled: true
+      iac_type: "terraform"
+      cloud_provider: "gcp"
+      output_format: "sarif"
+      fail_on_error: false
+
+    kics:
+      enabled: false
+
+    snyk:
+      enabled: false
+
+  # Container scanning tools
+  containers:
+    trivy:
+      enabled: true
+      version: "0.16.1"
+      scan_types: ["fs", "image"]
+      output_format: "sarif"
+      fail_on_error: false
+
+    grype:
+      enabled: false
+
+    clair:
+      enabled: false
+
+    anchore:
+      enabled: false
+
+  # Code quality and security tools
+  code_quality:
+    sonarqube:
+      enabled: false
+
+    codeql:
+      enabled: false
+
+    eslint:
+      enabled: false
+
+    pylint:
+      enabled: false
+
+  # License compliance tools
+  license:
+    license-checker:
+      enabled: true
+      allowed_licenses:
+        - "MIT"
+        - "BSD"
+        - "ISC"
+        - "Apache-2.0"
+        - "Unlicense"
+        - "WTFPL"
+        - "CC0-1.0"
+
+    pip-licenses:
+      enabled: true
+      allowed_licenses:
+        - "MIT License"
+        - "BSD License"
+        - "Apache Software License"
+        - "ISC License"
+        - "CC0 License"
+
+  # Security posture tools
+  posture:
+    ossf-scorecard:
+      enabled: true
+      version: "2.3.1"
+      publish_results: true
+
+    allstar:
+      enabled: false
+
+# Workflow configurations
+workflows:
+  # Trigger configurations
+  triggers:
+    push:
+      branches: ["main", "develop"]
+    pull_request:
+      branches: ["main", "develop"]
+    schedule:
+      security_scan: "0 2 * * *"  # Daily at 2 AM UTC
+      monitoring: "0 */6 * * *"   # Every 6 hours
+
+  # Timeout configurations
+  timeouts:
+    short: 15    # minutes
+    medium: 30   # minutes
+    long: 45     # minutes
+
+  # Parallel execution settings
+  parallel:
+    enabled: true
+    max_jobs: 5
+    fail_fast: false
+
+  # Artifact retention
+  artifacts:
+    retention_days: 30
+    security_reports: 90
+    incident_reports: 365
+
+  # Notification settings
+  notifications:
+    critical_alerts: true
+    security_issues: true
+    workflow_failures: true
+
+# Security policies
+policies:
+  # Vulnerability thresholds
+  vulnerabilities:
+    critical: 0      # No critical vulnerabilities allowed
+    high: 0          # No high vulnerabilities allowed
+    medium: 5        # Max 5 medium vulnerabilities
+    low: 10          # Max 10 low vulnerabilities
+
+  # Secret detection policies
+  secrets:
+    fail_on_detection: true
+    ignore_known_false_positives: true
+
+  # License compliance policies
+  licenses:
+    fail_on_forbidden: true
+    warn_on_unknown: true
+
+  # Infrastructure security policies
+  infrastructure:
+    require_encryption: true
+    require_access_controls: true
+    require_audit_logging: true
+
+# Reporting configurations
+reporting:
+  # Report formats
+  formats:
+    sarif: true
+    json: true
+    html: false
+    xml: false
+
+  # Report destinations
+  destinations:
+    github_security_tab: true
+    artifacts: true
+    issues: true
+
+  # Dashboard settings
+  dashboard:
+    enabled: true
+    update_readme: false
+    security_badge: true
+
+# Integration settings
+integrations:
+  # GitHub settings
+  github:
+    security_advisories: true
+    code_scanning: true
+    secret_scanning: true
+    dependency_graph: true
+
+  # External services
+  external:
+    slack: false
+    email: false
+    pagerduty: false
+    jira: false
+
+# Environment-specific configurations
+environments:
+  development:
+    tools:
+      secrets:
+        fail_on_detection: false
+      dependencies:
+        fail_on_cvss: 9.0
+
+  staging:
+    tools:
+      secrets:
+        fail_on_detection: true
+      dependencies:
+        fail_on_cvss: 8.0
+
+  production:
+    tools:
+      secrets:
+        fail_on_detection: true
+      dependencies:
+        fail_on_cvss: 7.0
+      infrastructure:
+        require_encryption: true
+
+# Maintenance settings
+maintenance:
+  # Tool updates
+  auto_update_tools: false
+  check_updates: true
+
+  # Configuration updates
+  auto_update_config: false
+  validate_config: true
+
+  # Cleanup settings
+  cleanup_artifacts: true
+  cleanup_old_reports: true
+
+# Logging and debugging
+logging:
+  level: "info"
+  verbose: false
+  debug: false
+
+  # Log retention
+  retention:
+    workflow_logs: 30    # days
+    security_logs: 90    # days
+    audit_logs: 365      # days
