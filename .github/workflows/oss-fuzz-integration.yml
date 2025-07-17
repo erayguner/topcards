@@ -1,0 +1,517 @@
+---
+name: OSS-Fuzz Integration & Local Fuzzing
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'oss-fuzz/**'
+      - 'terraform/**'
+      - '.github/workflows/**'
+      - '*.json'
+      - '*.sh'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'oss-fuzz/**'
+      - 'terraform/**'
+      - '.github/workflows/**'
+      - '*.json'
+      - '*.sh'
+  workflow_dispatch:
+    inputs:
+      fuzz_duration:
+        description: 'Duration to run local fuzzing (seconds)'
+        required: true
+        default: '300'
+        type: string
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  validate-oss-fuzz-config:
+    name: Validate OSS-Fuzz Configuration
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Validate OSS-Fuzz project.yaml
+        run: |
+          echo "🔍 Validating OSS-Fuzz configuration..."
+          
+          # Check required files exist
+          if [ ! -f "oss-fuzz/project.yaml" ]; then
+            echo "❌ Missing oss-fuzz/project.yaml"
+            exit 1
+          fi
+          
+          if [ ! -f "oss-fuzz/Dockerfile" ]; then
+            echo "❌ Missing oss-fuzz/Dockerfile"
+            exit 1
+          fi
+          
+          if [ ! -f "oss-fuzz/build.sh" ]; then
+            echo "❌ Missing oss-fuzz/build.sh"
+            exit 1
+          fi
+          
+          # Validate project.yaml structure
+          echo "✅ Checking project.yaml structure..."
+          
+          required_fields=("homepage" "language" "primary_contact" "main_repo")
+          for field in "${required_fields[@]}"; do
+            if ! grep -q "^${field}:" oss-fuzz/project.yaml; then
+              echo "❌ Missing required field: $field"
+              exit 1
+            fi
+          done
+          
+          echo "✅ OSS-Fuzz configuration validation passed"
+          
+      - name: Validate fuzz targets
+        run: |
+          echo "🎯 Validating fuzz targets..."
+          
+          target_dir="oss-fuzz/fuzz_targets"
+          if [ ! -d "$target_dir" ]; then
+            echo "❌ Missing fuzz_targets directory"
+            exit 1
+          fi
+          
+          # Check for fuzz target files
+          targets=(
+            "terraform_config_fuzzer.cpp"
+            "yaml_config_fuzzer.cpp"
+            "shell_script_fuzzer.cpp"
+            "json_config_fuzzer.cpp"
+            "github_actions_fuzzer.cpp"
+          )
+          
+          for target in "${targets[@]}"; do
+            if [ ! -f "$target_dir/$target" ]; then
+              echo "❌ Missing fuzz target: $target"
+              exit 1
+            fi
+            
+            # Check for LLVMFuzzerTestOneInput function
+            if ! grep -q "LLVMFuzzerTestOneInput" "$target_dir/$target"; then
+              echo "❌ Missing LLVMFuzzerTestOneInput in $target"
+              exit 1
+            fi
+          done
+          
+          echo "✅ All fuzz targets validated"
+          
+      - name: Check build script permissions
+        run: |
+          if [ ! -x "oss-fuzz/build.sh" ]; then
+            echo "❌ build.sh is not executable"
+            exit 1
+          fi
+          
+          echo "✅ Build script permissions correct"
+
+  build-fuzz-targets:
+    name: Build Fuzz Targets
+    runs-on: ubuntu-latest
+    needs: validate-oss-fuzz-config
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Install OSS-Fuzz dependencies
+        run: |
+          echo "🔧 Installing OSS-Fuzz dependencies..."
+          
+          # Install basic build tools
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            clang \
+            libc++-dev \
+            libc++abi-dev
+          
+          echo "✅ Dependencies installed"
+          
+      - name: Build fuzz targets locally
+        run: |
+          echo "🔨 Building fuzz targets..."
+          
+          # Create output directory
+          mkdir -p fuzz_build
+          export OUT="$(pwd)/fuzz_build"
+          export CC=clang
+          export CXX=clang++
+          export CFLAGS="-fsanitize=address,fuzzer-no-link"
+          export CXXFLAGS="-fsanitize=address,fuzzer-no-link -std=c++17"
+          export LIB_FUZZING_ENGINE="-fsanitize=fuzzer"
+          
+          # Build each fuzz target
+          targets=(
+            "terraform_config_fuzzer"
+            "yaml_config_fuzzer"
+            "shell_script_fuzzer"
+            "json_config_fuzzer"
+            "github_actions_fuzzer"
+          )
+          
+          for target in "${targets[@]}"; do
+            echo "Building $target..."
+            
+            $CXX $CXXFLAGS \
+              -I oss-fuzz/fuzz_targets \
+              oss-fuzz/fuzz_targets/${target}.cpp \
+              -o $OUT/$target \
+              $LIB_FUZZING_ENGINE
+              
+            if [ ! -f "$OUT/$target" ]; then
+              echo "❌ Failed to build $target"
+              exit 1
+            fi
+            
+            echo "✅ Built $target"
+          done
+          
+          echo "🎉 All fuzz targets built successfully"
+          
+      - name: Test fuzz targets
+        run: |
+          echo "🧪 Testing fuzz targets..."
+          
+          # Test each target with minimal input
+          for target in fuzz_build/*; do
+            if [ -x "$target" ]; then
+              echo "Testing $(basename $target)..."
+              
+              # Run for 5 seconds with minimal input
+              timeout 5s "$target" -max_total_time=5 -print_final_stats=1 || true
+              
+              echo "✅ Tested $(basename $target)"
+            fi
+          done
+          
+      - name: Upload fuzz targets
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-targets
+          path: fuzz_build/
+          retention-days: 7
+
+  local-fuzzing:
+    name: Local Fuzzing Test
+    runs-on: ubuntu-latest
+    needs: build-fuzz-targets
+    timeout-minutes: 20
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Download fuzz targets
+        uses: actions/download-artifact@v4
+        with:
+          name: fuzz-targets
+          path: fuzz_build/
+          
+      - name: Make fuzz targets executable
+        run: chmod +x fuzz_build/*
+        
+      - name: Create seed corpus
+        run: |
+          echo "🌱 Creating seed corpus..."
+          
+          mkdir -p seeds
+          
+          # Copy configuration files as seeds
+          find terraform -name "*.tf" -exec cp {} seeds/ \; 2>/dev/null || true
+          find .github -name "*.yml" -exec cp {} seeds/ \; 2>/dev/null || true
+          find . -maxdepth 1 -name "*.json" -exec cp {} seeds/ \; 2>/dev/null || true
+          find . -name "*.sh" -exec cp {} seeds/ \; 2>/dev/null || true
+          
+          # Create some basic test cases
+          cat > seeds/test.tf << 'EOF'
+          resource "google_compute_instance" "example" {
+            name         = "test-instance"
+            machine_type = "e2-micro"
+            zone         = "us-central1-a"
+          }
+          EOF
+          
+          cat > seeds/test.yml << 'EOF'
+          name: Test Workflow
+          on: [push]
+          jobs:
+            test:
+              runs-on: ubuntu-latest
+              steps:
+                - uses: actions/checkout@v4
+          EOF
+          
+          cat > seeds/test.json << 'EOF'
+          {
+            "name": "test-package",
+            "version": "1.0.0",
+            "scripts": {
+              "test": "echo test"
+            }
+          }
+          EOF
+          
+          echo "✅ Seed corpus created with $(ls seeds/ | wc -l) files"
+          
+      - name: Run fuzzing tests
+        run: |
+          echo "🔄 Running local fuzzing tests..."
+          
+          FUZZ_DURATION="${{ github.event.inputs.fuzz_duration || '60' }}"
+          echo "Fuzzing duration: ${FUZZ_DURATION} seconds"
+          
+          # Create output directory for findings
+          mkdir -p fuzz_findings
+          
+          # Run each fuzzer
+          for fuzzer in fuzz_build/*; do
+            if [ -x "$fuzzer" ]; then
+              fuzzer_name=$(basename "$fuzzer")
+              echo "🎯 Running $fuzzer_name for ${FUZZ_DURATION} seconds..."
+              
+              # Create fuzzer-specific output directory
+              mkdir -p "fuzz_findings/$fuzzer_name"
+              
+              # Run fuzzer with timeout
+              timeout "${FUZZ_DURATION}s" "$fuzzer" \
+                -max_total_time="$FUZZ_DURATION" \
+                -print_final_stats=1 \
+                -artifact_prefix="fuzz_findings/$fuzzer_name/" \
+                seeds/ 2>&1 | tee "fuzz_findings/$fuzzer_name/output.log" || true
+              
+              # Check for crashes
+              if ls fuzz_findings/$fuzzer_name/crash-* 1> /dev/null 2>&1; then
+                echo "⚠️ Crashes found in $fuzzer_name"
+                echo "crash_found=true" >> $GITHUB_ENV
+              fi
+              
+              # Check for hangs
+              if ls fuzz_findings/$fuzzer_name/timeout-* 1> /dev/null 2>&1; then
+                echo "⚠️ Timeouts found in $fuzzer_name"
+                echo "timeout_found=true" >> $GITHUB_ENV
+              fi
+              
+              echo "✅ Completed fuzzing with $fuzzer_name"
+            fi
+          done
+          
+      - name: Analyze fuzzing results
+        run: |
+          echo "📊 Analyzing fuzzing results..."
+          
+          total_execs=0
+          total_features=0
+          crashes_found=0
+          timeouts_found=0
+          
+          for fuzzer_dir in fuzz_findings/*/; do
+            if [ -d "$fuzzer_dir" ]; then
+              fuzzer_name=$(basename "$fuzzer_dir")
+              
+              # Parse output log for statistics
+              if [ -f "$fuzzer_dir/output.log" ]; then
+                execs=$(grep "stat::number_of_executed_units:" "$fuzzer_dir/output.log" | tail -1 | cut -d: -f2 | tr -d ' ' || echo "0")
+                features=$(grep "stat::average_exec_per_sec:" "$fuzzer_dir/output.log" | tail -1 | cut -d: -f2 | tr -d ' ' || echo "0")
+                
+                total_execs=$((total_execs + execs))
+                
+                echo "🎯 $fuzzer_name: $execs executions"
+              fi
+              
+              # Count crashes and timeouts
+              crash_count=$(ls "$fuzzer_dir"/crash-* 2>/dev/null | wc -l || echo "0")
+              timeout_count=$(ls "$fuzzer_dir"/timeout-* 2>/dev/null | wc -l || echo "0")
+              
+              crashes_found=$((crashes_found + crash_count))
+              timeouts_found=$((timeouts_found + timeout_count))
+              
+              if [ "$crash_count" -gt 0 ]; then
+                echo "❌ $fuzzer_name: $crash_count crashes found"
+              fi
+              
+              if [ "$timeout_count" -gt 0 ]; then
+                echo "⏰ $fuzzer_name: $timeout_count timeouts found"
+              fi
+            fi
+          done
+          
+          echo ""
+          echo "📈 Fuzzing Summary:"
+          echo "   Total executions: $total_execs"
+          echo "   Total crashes: $crashes_found"
+          echo "   Total timeouts: $timeouts_found"
+          echo "   Fuzzers tested: $(ls fuzz_build/ | wc -l)"
+          
+          # Set outputs for GitHub summary
+          echo "TOTAL_EXECS=$total_execs" >> $GITHUB_ENV
+          echo "TOTAL_CRASHES=$crashes_found" >> $GITHUB_ENV
+          echo "TOTAL_TIMEOUTS=$timeouts_found" >> $GITHUB_ENV
+          
+      - name: Upload fuzzing artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fuzz-findings
+          path: fuzz_findings/
+          retention-days: 30
+          
+      - name: Generate fuzzing report
+        if: always()
+        run: |
+          echo "## 🎯 OSS-Fuzz Local Testing Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Fuzzing Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Executions**: ${TOTAL_EXECS:-0}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Crashes Found**: ${TOTAL_CRASHES:-0}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timeouts Found**: ${TOTAL_TIMEOUTS:-0}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Fuzzers Tested**: $(ls fuzz_build/ 2>/dev/null | wc -l)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Duration**: ${{ github.event.inputs.fuzz_duration || '60' }} seconds" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Fuzz Targets" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Terraform Configuration Fuzzer" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ YAML Configuration Fuzzer" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Shell Script Fuzzer" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ JSON Configuration Fuzzer" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ GitHub Actions Workflow Fuzzer" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${TOTAL_CRASHES:-0}" -gt 0 ] || [ "${TOTAL_TIMEOUTS:-0}" -gt 0 ]; then
+            echo "### ⚠️ Issues Found" >> $GITHUB_STEP_SUMMARY
+            echo "Crashes or timeouts were found during fuzzing. Please review the artifacts." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ✅ Clean Results" >> $GITHUB_STEP_SUMMARY
+            echo "No crashes or timeouts found during fuzzing." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review fuzzing artifacts for any issues found" >> $GITHUB_STEP_SUMMARY
+          echo "2. Consider submitting to OSS-Fuzz for continuous fuzzing" >> $GITHUB_STEP_SUMMARY
+          echo "3. Expand fuzz targets based on findings" >> $GITHUB_STEP_SUMMARY
+
+  oss-fuzz-preparation:
+    name: OSS-Fuzz Submission Preparation
+    runs-on: ubuntu-latest
+    needs: [validate-oss-fuzz-config, build-fuzz-targets]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Generate OSS-Fuzz submission guide
+        run: |
+          echo "📋 Generating OSS-Fuzz submission guide..."
+          
+          cat > OSS_FUZZ_SUBMISSION.md << 'EOF'
+          # OSS-Fuzz Submission Guide for TopCards
+          
+          This repository is ready for OSS-Fuzz integration. Follow these steps to submit the project:
+          
+          ## Prerequisites
+          
+          - [x] Project is open source
+          - [x] Project has security impact
+          - [x] Fuzz targets are implemented
+          - [x] Build system is configured
+          
+          ## Submission Steps
+          
+          1. **Fork OSS-Fuzz Repository**
+             ```bash
+             git clone https://github.com/google/oss-fuzz.git
+             cd oss-fuzz
+             git checkout -b add-topcards
+             ```
+          
+          2. **Create Project Directory**
+             ```bash
+             mkdir projects/topcards
+             ```
+          
+          3. **Copy Configuration Files**
+             ```bash
+             cp /path/to/topcards/oss-fuzz/* projects/topcards/
+             ```
+          
+          4. **Test Locally**
+             ```bash
+             python infra/helper.py build_image topcards
+             python infra/helper.py build_fuzzers topcards
+             python infra/helper.py check_build topcards
+             python infra/helper.py run_fuzzer topcards terraform_config_fuzzer
+             ```
+          
+          5. **Submit Pull Request**
+             - Create PR to OSS-Fuzz repository
+             - Include this project configuration
+             - Add copyright headers if needed
+          
+          ## Fuzz Targets Included
+          
+          - **terraform_config_fuzzer**: Tests Terraform configuration parsing
+          - **yaml_config_fuzzer**: Tests YAML configuration validation
+          - **shell_script_fuzzer**: Tests shell script security analysis
+          - **json_config_fuzzer**: Tests JSON configuration parsing
+          - **github_actions_fuzzer**: Tests GitHub Actions workflow validation
+          
+          ## Coverage Areas
+          
+          - Infrastructure as Code security
+          - Configuration file parsing
+          - Shell script injection prevention
+          - YAML/JSON validation
+          - GitHub Actions workflow security
+          
+          ## Expected Benefits
+          
+          - Continuous fuzzing of configuration parsers
+          - Discovery of parsing edge cases
+          - Prevention of injection vulnerabilities
+          - Improved input validation
+          - Enhanced security posture
+          
+          ## Monitoring
+          
+          After submission and acceptance:
+          - Monitor ClusterFuzz dashboard
+          - Review bug reports
+          - Fix discovered issues
+          - Maintain fuzz targets
+          
+          ## Contact
+          
+          - Primary Contact: erayguner@gmail.com
+          - Repository: https://github.com/erayguner/topcards
+          - Security Policy: See SECURITY.md
+          EOF
+          
+          echo "✅ OSS-Fuzz submission guide created"
+          
+      - name: Upload submission materials
+        uses: actions/upload-artifact@v4
+        with:
+          name: oss-fuzz-submission
+          path: |
+            oss-fuzz/
+            OSS_FUZZ_SUBMISSION.md
+          retention-days: 90

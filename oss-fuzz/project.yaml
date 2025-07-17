@@ -1,0 +1,54 @@
+homepage: "https://github.com/erayguner/topcards"
+language: c++
+primary_contact: "erayguner@gmail.com"
+auto_ccs:
+  - "erayguner@gmail.com"
+main_repo: "https://github.com/erayguner/topcards"
+
+# Project configuration
+fuzzing_engines:
+  - libfuzzer
+  - afl
+  - honggfuzz
+
+sanitizers:
+  - address
+  - memory
+  - undefined
+  - dataflow
+
+architectures:
+  - x86_64
+
+# Build configuration
+view_restrictions: none
+file_github_issue: true
+
+# Contact for security issues
+security_contacts:
+  - "erayguner@gmail.com"
+
+# Additional metadata
+description: >
+  TopCards is a secure, well-tested application with comprehensive CI/CD pipelines
+  featuring Terraform infrastructure, security automation, and robust testing frameworks.
+  This OSS-Fuzz integration tests infrastructure configuration parsing, shell script
+  processing, and YAML/JSON configuration validation.
+
+# Testing focus areas
+testing_focus:
+  - Infrastructure as Code (Terraform) configuration parsing
+  - Shell script security and validation
+  - YAML/JSON configuration file processing
+  - GitHub Actions workflow validation
+  - Security automation configuration parsing
+
+# Project labels
+labels:
+  - infrastructure
+  - terraform
+  - security
+  - devops
+  - automation
+  - gcp
+  - ci-cd
