@@ -86,3 +86,17 @@ secrets.yml
 secrets.yaml
 credentials.json
 service-account.json
+
+# Claude Code files
+.claude/
+.claude*
+claude.md
+CLAUDE.md
+claude-*
+.claude-*
+
+# Swarm files (ruv-swarm MCP)
+.swarm/
+.swarm*
+swarm-*
+.swarm-*
