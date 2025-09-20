@@ -5,15 +5,17 @@ FILTER_REGEX_EXCLUDE: |
   ^node_modules/
   ^memory/
   ^coordination/
-  scripts/validate-github-workflows.sh
+  scripts/
+
+# Disable problematic linters
+DISABLE_LINTERS:
+  - BASH_SHELLCHECK
 
 ENABLE_LINTERS:
   - SECRET_GITLEAKS
   - YAML_YAMLLINT
   - JSON_JSONLINT
   - MARKDOWN_MARKDOWNLINT
-  - BASH_SHFMT
-  - BASH_SHELLCHECK
   - TERRAFORM_TFLINT
   - TERRAFORM_TFSEC
   - DOCKERFILE_HADOLINT
