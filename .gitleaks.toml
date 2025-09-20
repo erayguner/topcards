@@ -181,12 +181,6 @@ description = "Terraform backend configuration with sensitive data"
 regex = '''(?i)(access_key|secret_key|token)\s*=\s*['\"]?[A-Za-z0-9/+=]{20,}['\"]?'''
 path = '''backend\.tf$'''
 
-# Enhanced entropy detection
-[rules.entropy]
-min = 3.5
-max = 8.0
-group = 1
-
 # Severity levels
 [severity]
 high = ["google-service-account", "ssh-private-key", "aws-secret-key"]
