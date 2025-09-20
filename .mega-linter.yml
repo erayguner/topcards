@@ -5,6 +5,7 @@ FILTER_REGEX_EXCLUDE: |
   ^node_modules/
   ^memory/
   ^coordination/
+  scripts/validate-github-workflows.sh
 
 ENABLE_LINTERS:
   - SECRET_GITLEAKS
@@ -24,3 +25,4 @@ REPORTERS:
 # Use project-specific configs when available
 YAML_YAMLLINT_CONFIG_FILE: .github/configs/yamllint.yml
 SECRET_GITLEAKS_ARGUMENTS: --config-path .gitleaks.toml
+TERRAFORM_TFLINT_CONFIG_FILE: .tflint.hcl

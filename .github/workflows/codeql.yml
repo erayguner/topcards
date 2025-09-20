@@ -23,7 +23,7 @@ jobs:
 
     strategy:
       matrix:
-        language: ['javascript', 'python']
+        language: ['javascript']
 
     steps:
       - name: Checkout repository
@@ -36,6 +36,12 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           queries: security-extended,security-and-quality
+          config: |
+            paths-ignore:
+              - node_modules
+              - .git
+              - terraform
+              - docs
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3

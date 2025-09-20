@@ -1,0 +1,54 @@
+config {
+  disabled_by_default = false
+  force = false
+}
+
+# Basic terraform rules without external plugins
+rule "terraform_deprecated_index" {
+  enabled = true
+}
+
+rule "terraform_deprecated_interpolation" {
+  enabled = true
+}
+
+rule "terraform_documented_outputs" {
+  enabled = true
+}
+
+rule "terraform_documented_variables" {
+  enabled = true
+}
+
+rule "terraform_naming_convention" {
+  enabled = true
+}
+
+rule "terraform_required_providers" {
+  enabled = true
+}
+
+rule "terraform_required_version" {
+  enabled = true
+}
+
+rule "terraform_standard_module_structure" {
+  enabled = true
+}
+
+rule "terraform_typed_variables" {
+  enabled = true
+}
+
+rule "terraform_unused_declarations" {
+  enabled = true
+}
+
+rule "terraform_unused_required_providers" {
+  enabled = true
+}
+
+# Disable external plugins to avoid API issues
+# plugin "azurerm" {
+#   enabled = false
+# }
