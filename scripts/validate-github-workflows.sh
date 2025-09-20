@@ -243,7 +243,7 @@ if [[ ${#WORKFLOW_FILES[@]} -eq 0 ]]; then
     exit 0
 fi
 
-echo "Found ${#WORKFLOW_FILES[@]} workflow file(s) to validate"
+echo "Found ${#WORKFLOW_FILES[*]} workflow file(s) to validate"
 
 # Validate each workflow file
 for file in "${WORKFLOW_FILES[@]}"; do
