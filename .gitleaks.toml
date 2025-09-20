@@ -1,0 +1,194 @@
+# Gitleaks Configuration
+# https://github.com/zricethezav/gitleaks
+
+title = "TopCards Security - Gitleaks Configuration"
+
+# Global configuration
+[extend]
+useDefault = true
+
+# Custom rules for additional security
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)api[_-]?key[_-]?[=:]\s*['\"]?[a-z0-9]{20,}['\"]?'''
+keywords = [
+    "api_key",
+    "apikey",
+    "api-key",
+]
+
+[[rules]]
+id = "google-service-account"
+description = "Google Service Account JSON"
+regex = '''(?i)(type|private_key_id|private_key|client_email|client_id|auth_uri|token_uri|client_x509_cert_url)'''
+path = '''(?i).*service[_-]?account.*\.json$'''
+
+[[rules]]
+id = "terraform-sensitive"
+description = "Terraform sensitive values"
+regex = '''(?i)(password|secret|token|key)\s*=\s*['\"]?[^\s'"]+['\"]?'''
+path = '''.*\.tf$'''
+
+[[rules]]
+id = "google-cloud-key"
+description = "Google Cloud API Key"
+regex = '''AIza[0-9A-Za-z\\-_]{35}'''
+
+[[rules]]
+id = "jwt-token"
+description = "JWT Token"
+regex = '''eyJ[A-Za-z0-9_-]*\.eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*'''
+
+[[rules]]
+id = "ssh-private-key"
+description = "SSH Private Key"
+regex = '''-----BEGIN\s+(RSA\s+|OPENSSH\s+|DSA\s+|EC\s+|PGP\s+)?PRIVATE\s+KEY-----'''
+
+[[rules]]
+id = "certificate"
+description = "Certificate"
+regex = '''-----BEGIN\s+CERTIFICATE-----'''
+
+# Allowlist configuration
+[allowlist]
+description = "Allowlist for false positives and acceptable patterns"
+paths = [
+    '''\.git/''',
+    '''node_modules/''',
+    '''vendor/''',
+    '''__pycache__/''',
+    '''.pytest_cache/''',
+    '''.tox/''',
+    '''dist/''',
+    '''build/''',
+    '''.terraform/''',
+    '''terraform\.tfstate.*''',
+    '''\.claude/''',
+    '''\.swarm/''',
+    '''memory/''',
+]
+
+# Allowlist for specific patterns that are safe
+regexes = [
+    # Test keys and examples
+    '''(?i)example[_-]?key''',
+    '''(?i)test[_-]?key''',
+    '''(?i)dummy[_-]?key''',
+    '''(?i)fake[_-]?key''',
+    '''(?i)mock[_-]?key''',
+    # Documentation examples
+    '''YOUR[_-]?API[_-]?KEY''',
+    '''your-api-key''',
+    '''<api[_-]?key>''',
+    # Common false positives
+    '''(?i)public[_-]?key''',
+    '''(?i)key[_-]?name''',
+    '''(?i)key[_-]?type''',
+    # Base64 encoded examples that are clearly examples
+    '''VGhpcyBpcyBhIHRlc3Q=''',  # "This is a test"
+    '''ZXhhbXBsZQ==''',           # "example"
+]
+
+# Git configuration
+[[rules]]
+id = "git-config-user"
+description = "Git configuration with potential email exposure"
+regex = '''user\.email\s*=\s*['\"]?[^@\s'"]+@[^@\s'"]+\.[^@\s'"]+['\"]?'''
+path = '''\.gitconfig$'''
+
+# Environment variable patterns
+[[rules]]
+id = "env-secret"
+description = "Environment secret variable"
+regex = '''(?i)(export\s+|^|\s+)[A-Z_]*[Ss][Ee][Cc][Rr][Ee][Tt][A-Z_]*\s*=\s*['\"]?[^\s'"]+['\"]?'''
+
+[[rules]]
+id = "env-password"
+description = "Environment password variable"
+regex = '''(?i)(export\s+|^|\s+)[A-Z_]*[Pp][Aa][Ss][Ss][Ww][Oo][Rr][Dd][A-Z_]*\s*=\s*['\"]?[^\s'"]+['\"]?'''
+
+[[rules]]
+id = "env-token"
+description = "Environment token variable"
+regex = '''(?i)(export\s+|^|\s+)[A-Z_]*[Tt][Oo][Kk][Ee][Nn][A-Z_]*\s*=\s*['\"]?[^\s'"]+['\"]?'''
+
+# Database connection strings
+[[rules]]
+id = "database-url"
+description = "Database connection URL"
+regex = '''(?i)(postgres|mysql|mongodb|redis)://[^:\s]+:[^@\s]+@[^/\s]+/'''
+
+# Slack tokens
+[[rules]]
+id = "slack-token"
+description = "Slack Token"
+regex = '''xox[baprs]-[0-9]{12}-[0-9]{12}-[a-zA-Z0-9]{24}'''
+
+# Discord tokens
+[[rules]]
+id = "discord-token"
+description = "Discord Bot Token"
+regex = '''[MN][A-Za-z\d]{23}\.[\w-]{6}\.[\w-]{27}'''
+
+# GitHub tokens
+[[rules]]
+id = "github-token"
+description = "GitHub Personal Access Token"
+regex = '''ghp_[A-Za-z0-9]{36}'''
+
+[[rules]]
+id = "github-oauth"
+description = "GitHub OAuth Token"
+regex = '''gho_[A-Za-z0-9]{36}'''
+
+[[rules]]
+id = "github-app"
+description = "GitHub App Token"
+regex = '''(ghu|ghs)_[A-Za-z0-9]{36}'''
+
+# Additional cloud provider patterns
+[[rules]]
+id = "aws-access-key"
+description = "AWS Access Key ID"
+regex = '''AKIA[0-9A-Z]{16}'''
+
+[[rules]]
+id = "aws-secret-key"
+description = "AWS Secret Access Key"
+regex = '''(?i)aws[_-]?secret[_-]?access[_-]?key[_-]?[=:]\s*['\"]?[A-Za-z0-9/+=]{40}['\"]?'''
+
+[[rules]]
+id = "azure-storage-key"
+description = "Azure Storage Account Key"
+regex = '''(?i)DefaultEndpointsProtocol=https;AccountName=[^;]+;AccountKey=[A-Za-z0-9+/=]+'''
+
+# Custom application patterns
+[[rules]]
+id = "custom-bearer-token"
+description = "Bearer Token"
+regex = '''(?i)bearer\s+[A-Za-z0-9\-_=+/]{20,}'''
+
+[[rules]]
+id = "custom-auth-header"
+description = "Authorization Header"
+regex = '''(?i)authorization[_-]?[=:]\s*['\"]?[A-Za-z0-9\-_=+/\s]+['\"]?'''
+
+# File-specific rules
+[[rules]]
+id = "terraform-backend-key"
+description = "Terraform backend configuration with sensitive data"
+regex = '''(?i)(access_key|secret_key|token)\s*=\s*['\"]?[A-Za-z0-9/+=]{20,}['\"]?'''
+path = '''backend\.tf$'''
+
+# Enhanced entropy detection
+[rules.entropy]
+min = 3.5
+max = 8.0
+group = 1
+
+# Severity levels
+[severity]
+high = ["google-service-account", "ssh-private-key", "aws-secret-key"]
+medium = ["google-cloud-key", "jwt-token", "database-url"]
+low = ["git-config-user", "custom-bearer-token"]

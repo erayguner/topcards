@@ -35,6 +35,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+        with:
+          config-path: .gitleaks.toml
 
       - name: Run TruffleHog
         uses: trufflesecurity/trufflehog@v3.63.2
@@ -72,15 +74,15 @@ jobs:
 
       - name: Run Bandit security scan
         run: |
-          bandit -r . -f json -o bandit-report.json || true
-          bandit -r . -f txt
+          bandit -c .bandit -r . -f json -o bandit-report.json || true
+          bandit -c .bandit -r . -f txt
 
       - name: Run Semgrep
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
         run: |
-          semgrep --config=auto --json --output=semgrep-report.json . || true
-          semgrep --config=auto .
+          semgrep --config=.semgrep.yml --json --output=semgrep-report.json . || true
+          semgrep --config=.semgrep.yml .
 
       - name: Upload Bandit results
         uses: actions/upload-artifact@v4
