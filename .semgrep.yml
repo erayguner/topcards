@@ -151,21 +151,24 @@ custom_rules:
   # Secret patterns
   - id: potential-api-key
     patterns:
-      - pattern-regex: '(?i)(api[_-]?key|apikey)\s*[=:]\s*["\'][a-zA-Z0-9]{20,}["\']'
+      - pattern-regex: >-
+          (?i)(api[_-]?key|apikey)\s*[=:]\s*["'][a-zA-Z0-9]{20,}["']
     message: "Potential API key detected"
     languages: [javascript, typescript, python, bash, yaml]
     severity: ERROR
 
   - id: potential-password
     patterns:
-      - pattern-regex: '(?i)(password|passwd|pwd)\s*[=:]\s*["\'][^"\']{8,}["\']'
+      - pattern-regex: >-
+          (?i)(password|passwd|pwd)\s*[=:]\s*["'][^"']{8,}["']
     message: "Potential hardcoded password"
     languages: [javascript, typescript, python, bash, yaml]
     severity: ERROR
 
   - id: potential-token
     patterns:
-      - pattern-regex: '(?i)(token|auth[_-]?token)\s*[=:]\s*["\'][a-zA-Z0-9]{20,}["\']'
+      - pattern-regex: >-
+          (?i)(token|auth[_-]?token)\s*[=:]\s*["'][a-zA-Z0-9]{20,}["']
     message: "Potential authentication token"
     languages: [javascript, typescript, python, bash, yaml]
     severity: ERROR
@@ -233,15 +236,18 @@ custom_rules:
   # Bash security patterns
   - id: bash-curl-insecure
     patterns:
-      - pattern-regex: 'curl\s+.*-k\s+.*'
-      - pattern-regex: 'curl\s+.*--insecure\s+.*'
+      - pattern-regex: >-
+          curl\s+.*-k\s+.*
+      - pattern-regex: >-
+          curl\s+.*--insecure\s+.*
     message: "curl with insecure flag (-k/--insecure) detected"
     languages: [bash]
     severity: WARNING
 
   - id: bash-wget-insecure
     patterns:
-      - pattern-regex: 'wget\s+.*--no-check-certificate\s+.*'
+      - pattern-regex: >-
+          wget\s+.*--no-check-certificate\s+.*
     message: "wget with --no-check-certificate detected"
     languages: [bash]
     severity: WARNING
@@ -249,15 +255,18 @@ custom_rules:
   # Docker security patterns
   - id: dockerfile-run-as-root
     patterns:
-      - pattern-regex: '^USER\s+root\s*$'
-      - pattern-regex: '^USER\s+0\s*$'
+      - pattern-regex: >-
+          ^USER\s+root\s*$
+      - pattern-regex: >-
+          ^USER\s+0\s*$
     message: "Running container as root user"
     languages: [dockerfile]
     severity: WARNING
 
   - id: dockerfile-latest-tag
     patterns:
-      - pattern-regex: 'FROM\s+[^:]+:latest'
+      - pattern-regex: >-
+          FROM\s+[^:]+:latest
     message: "Using :latest tag in Dockerfile"
     languages: [dockerfile]
     severity: INFO
