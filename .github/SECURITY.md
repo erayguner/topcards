@@ -130,15 +130,10 @@ We take security seriously and provide security updates for the following versio
 
 ### Environment Variables
 
-```bash
-# Required for security scanning
-SEMGREP_APP_TOKEN=<semgrep-token>
-GITLEAKS_LICENSE=<gitleaks-license>
-
-# Google Cloud Security
-GOOGLE_PROJECT_ID=<project-id>
-GOOGLE_REGION=<region>
-```
+-Required secrets and env vars are stored in GitHub and injected at runtime:
+- `SEMGREP_APP_TOKEN` – Semgrep App token (stored as GitHub secret)
+- `GITLEAKS_LICENSE` – Optional enterprise license for Gitleaks
+- `GOOGLE_PROJECT_ID` / `GOOGLE_REGION` – Deployment targets managed via workflow `env`
 
 ### Tool Configurations
 

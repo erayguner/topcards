@@ -35,10 +35,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
-        with:
-          args: >-
-            detect --source=. --config-path=.gitleaks.toml
-            --redact --report-format=sarif --report-path=results.sarif
 
       - name: Run TruffleHog
         uses: trufflesecurity/trufflehog@v3.63.2

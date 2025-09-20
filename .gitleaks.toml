@@ -67,6 +67,7 @@ paths = [
     '''\.claude/''',
     '''\.swarm/''',
     '''memory/''',
+    '''scripts/check-secrets-patterns\.sh'''
 ]
 
 # Allowlist for specific patterns that are safe
