@@ -95,5 +95,4 @@ jobs:
         with:
           name: semgrep-results
           path: semgrep-report.json
-
 # Container scanning moved to security-policy.yml with proper Docker file detection

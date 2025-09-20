@@ -41,16 +41,16 @@ jobs:
        (contains(github.event.issue.labels.*.name, 'security') || 
         contains(github.event.issue.labels.*.name, 'vulnerability'))) ||
       github.event_name == 'workflow_dispatch'
-    
+
     outputs:
       incident-type: ${{ steps.classify.outputs.incident-type }}
       severity: ${{ steps.classify.outputs.severity }}
       response-required: ${{ steps.classify.outputs.response-required }}
-      
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: Classify Security Incident
         id: classify
         run: |
@@ -70,11 +70,11 @@ jobs:
               SEVERITY="high"
             fi
           fi
-          
+
           echo "incident-type=$INCIDENT_TYPE" >> $GITHUB_OUTPUT
           echo "severity=$SEVERITY" >> $GITHUB_OUTPUT
           echo "response-required=true" >> $GITHUB_OUTPUT
-          
+
           # Create incident tracking file
           mkdir -p security-incidents
           cat > security-incidents/incident-$(date +%Y%m%d-%H%M%S).json << EOF
@@ -93,7 +93,7 @@ jobs:
             }
           }
           EOF
-          
+
       - name: Upload Incident Report
         uses: actions/upload-artifact@v4
         with:
@@ -106,21 +106,21 @@ jobs:
     needs: incident-detection
     runs-on: ubuntu-latest
     if: needs.incident-detection.outputs.response-required == 'true'
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: Critical Incident Response
         if: needs.incident-detection.outputs.severity == 'critical'
         run: |
           echo "🚨 CRITICAL SECURITY INCIDENT DETECTED"
           echo "Type: ${{ needs.incident-detection.outputs.incident-type }}"
           echo "Severity: ${{ needs.incident-detection.outputs.severity }}"
-          
+
           # Immediate response actions for critical incidents
           echo "Executing critical incident response protocol..."
-          
+
           # 1. Collect system information
           echo "## System Information" > critical-incident-report.md
           echo "- Timestamp: $(date -u)" >> critical-incident-report.md
@@ -128,13 +128,13 @@ jobs:
           echo "- Branch: ${{ github.ref_name }}" >> critical-incident-report.md
           echo "- Commit: ${{ github.sha }}" >> critical-incident-report.md
           echo "- Incident Type: ${{ needs.incident-detection.outputs.incident-type }}" >> critical-incident-report.md
-          
+
           # 2. Security assessment
           echo "## Security Assessment" >> critical-incident-report.md
           echo "- Affected Systems: Repository codebase" >> critical-incident-report.md
           echo "- Potential Impact: High" >> critical-incident-report.md
           echo "- Containment Status: In Progress" >> critical-incident-report.md
-          
+
           # 3. Immediate containment actions
           echo "## Containment Actions" >> critical-incident-report.md
           echo "- [x] Incident detected and classified" >> critical-incident-report.md
@@ -142,116 +142,116 @@ jobs:
           echo "- [ ] Affected systems isolated" >> critical-incident-report.md
           echo "- [ ] Vulnerability patched" >> critical-incident-report.md
           echo "- [ ] Systems restored" >> critical-incident-report.md
-          
+
           # 4. Generate security scan
           echo "Triggering emergency security scan..."
-          
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: High Severity Response
         if: needs.incident-detection.outputs.severity == 'high'
         run: |
           echo "⚠️ HIGH SEVERITY SECURITY INCIDENT"
           echo "Type: ${{ needs.incident-detection.outputs.incident-type }}"
-          
+
           # High severity response protocol
           echo "Executing high severity response protocol..."
-          
+
           # Generate response checklist
           cat > high-severity-response.md << EOF
           # High Severity Security Incident Response
-          
+
           **Incident ID**: $(date +%Y%m%d-%H%M%S)
           **Type**: ${{ needs.incident-detection.outputs.incident-type }}
           **Severity**: ${{ needs.incident-detection.outputs.severity }}
           **Status**: Under Investigation
-          
+
           ## Response Checklist
-          
+
           ### Immediate Actions (0-1 hours)
           - [x] Incident detected and classified
           - [ ] Security team notified
           - [ ] Initial assessment completed
           - [ ] Containment measures identified
-          
+
           ### Short-term Actions (1-24 hours)
           - [ ] Detailed investigation conducted
           - [ ] Root cause analysis completed
           - [ ] Remediation plan developed
           - [ ] Security patches applied
-          
+
           ### Long-term Actions (24+ hours)
           - [ ] Systems validated and restored
           - [ ] Security monitoring enhanced
           - [ ] Incident report completed
           - [ ] Lessons learned documented
-          
+
           ## Investigation Notes
-          
+
           - **Repository**: ${{ github.repository }}
           - **Branch**: ${{ github.ref_name }}
           - **Commit**: ${{ github.sha }}
           - **Timestamp**: $(date -u)
-          
+
           ## Remediation Status
-          
+
           - **Status**: In Progress
           - **ETA**: TBD
           - **Owner**: Security Team
           EOF
-          
+
       - name: Medium/Low Severity Response
         if: needs.incident-detection.outputs.severity == 'medium' || needs.incident-detection.outputs.severity == 'low'
         run: |
           echo "ℹ️ SECURITY INCIDENT - ${{ needs.incident-detection.outputs.severity }} severity"
           echo "Type: ${{ needs.incident-detection.outputs.incident-type }}"
-          
+
           # Standard response protocol
           echo "Executing standard response protocol..."
-          
+
           # Generate tracking issue
           cat > standard-response.md << EOF
           # Security Incident Tracking
-          
+
           **Incident ID**: $(date +%Y%m%d-%H%M%S)
           **Type**: ${{ needs.incident-detection.outputs.incident-type }}
           **Severity**: ${{ needs.incident-detection.outputs.severity }}
           **Status**: Acknowledged
-          
+
           ## Response Plan
-          
+
           ### Assessment Phase
           - [x] Incident logged and classified
           - [ ] Initial security assessment
           - [ ] Impact analysis completed
           - [ ] Risk evaluation performed
-          
+
           ### Remediation Phase
           - [ ] Remediation plan developed
           - [ ] Security fixes implemented
           - [ ] Testing and validation
           - [ ] Deployment and monitoring
-          
+
           ### Closure Phase
           - [ ] Incident resolved
           - [ ] Documentation updated
           - [ ] Process improvements identified
           - [ ] Incident closed
-          
+
           ## Timeline
-          
+
           - **Reported**: $(date -u)
           - **Acknowledged**: $(date -u)
           - **Target Resolution**: $(date -u -d '+7 days')
-          
+
           ## Notes
-          
+
           Repository: ${{ github.repository }}
           Branch: ${{ github.ref_name }}
           Commit: ${{ github.sha }}
           EOF
-          
+
       - name: Upload Response Reports
         uses: actions/upload-artifact@v4
         with:
@@ -261,7 +261,7 @@ jobs:
             high-severity-response.md
             standard-response.md
           retention-days: 90
-          
+
       - name: Update Incident Status
         uses: actions/github-script@v7
         if: github.event_name == 'issues'
@@ -269,7 +269,7 @@ jobs:
           script: |
             const severity = "${{ needs.incident-detection.outputs.severity }}";
             const incidentType = "${{ needs.incident-detection.outputs.incident-type }}";
-            
+
             // Add incident response label
             await github.rest.issues.addLabels({
               owner: context.repo.owner,
@@ -277,38 +277,38 @@ jobs:
               issue_number: context.issue.number,
               labels: ['incident-response', `severity-${severity}`, `type-${incidentType}`]
             });
-            
+
             // Add response comment
             const responseComment = `## 🚨 Security Incident Response Activated
-            
+
             **Incident Classification:**
             - **Type**: ${incidentType}
             - **Severity**: ${severity}
             - **Status**: Response In Progress
-            
+
             **Automated Response Actions:**
             - ✅ Incident detected and classified
             - ✅ Response protocol activated
             - ✅ Security team notified
             - 🔄 Investigation and remediation in progress
-            
+
             **Next Steps:**
             1. Detailed security assessment
             2. Remediation plan development
             3. Security fix implementation
             4. Validation and testing
-            
+
             **Timeline:**
             - **Critical**: 4 hours to resolution
             - **High**: 24 hours to resolution
             - **Medium**: 7 days to resolution
             - **Low**: 30 days to resolution
-            
+
             This incident is being tracked and managed by the automated security response system.
-            
+
             ---
             *Generated by Security Incident Response workflow*`;
-            
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -324,36 +324,36 @@ jobs:
       needs.incident-detection.outputs.response-required == 'true' &&
       (needs.incident-detection.outputs.severity == 'critical' || 
        needs.incident-detection.outputs.severity == 'high')
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
+
       - name: Security Forensics Analysis
         run: |
           echo "🔍 Starting security forensics analysis..."
-          
+
           # Create forensics directory
           mkdir -p security-forensics
-          
+
           # 1. Git history analysis
           echo "## Git History Analysis" > security-forensics/forensics-report.md
           echo "### Recent Commits" >> security-forensics/forensics-report.md
           git log --oneline -10 >> security-forensics/forensics-report.md
           echo "" >> security-forensics/forensics-report.md
-          
+
           # 2. File modification analysis
           echo "### Recent File Changes" >> security-forensics/forensics-report.md
           git diff --name-only HEAD~10 HEAD >> security-forensics/forensics-report.md
           echo "" >> security-forensics/forensics-report.md
-          
+
           # 3. Security-relevant file analysis
           echo "### Security-Relevant Files" >> security-forensics/forensics-report.md
           find . -name "*.tf" -o -name "*.yml" -o -name "*.yaml" -o -name "*.json" | head -20 >> security-forensics/forensics-report.md
           echo "" >> security-forensics/forensics-report.md
-          
+
           # 4. Dependency analysis
           echo "### Dependencies Analysis" >> security-forensics/forensics-report.md
           if [ -f package.json ]; then
@@ -361,13 +361,13 @@ jobs:
             jq -r '.dependencies | keys[]' package.json 2>/dev/null || echo "No dependencies found" >> security-forensics/forensics-report.md
           fi
           echo "" >> security-forensics/forensics-report.md
-          
+
           # 5. Security configuration analysis
           echo "### Security Configuration" >> security-forensics/forensics-report.md
           echo "**GitHub Workflows:**" >> security-forensics/forensics-report.md
           ls -la .github/workflows/ >> security-forensics/forensics-report.md
           echo "" >> security-forensics/forensics-report.md
-          
+
           # 6. Generate forensics summary
           echo "### Forensics Summary" >> security-forensics/forensics-report.md
           echo "- **Analysis Date**: $(date -u)" >> security-forensics/forensics-report.md
@@ -376,9 +376,9 @@ jobs:
           echo "- **Commit**: ${{ github.sha }}" >> security-forensics/forensics-report.md
           echo "- **Incident Type**: ${{ needs.incident-detection.outputs.incident-type }}" >> security-forensics/forensics-report.md
           echo "- **Severity**: ${{ needs.incident-detection.outputs.severity }}" >> security-forensics/forensics-report.md
-          
+
           echo "Forensics analysis completed."
-          
+
       - name: Upload Forensics Report
         uses: actions/upload-artifact@v4
         with:
@@ -391,72 +391,72 @@ jobs:
     needs: [incident-detection, incident-response, security-forensics]
     runs-on: ubuntu-latest
     if: always()
-    
+
     steps:
       - name: Generate Incident Summary
         run: |
           echo "📋 Generating incident summary..."
-          
+
           # Create incident summary
           cat > incident-summary.md << EOF
           # Security Incident Summary
-          
+
           **Incident ID**: $(date +%Y%m%d-%H%M%S)
           **Status**: Response Complete
           **Generated**: $(date -u)
-          
+
           ## Incident Details
-          
+
           - **Type**: ${{ needs.incident-detection.outputs.incident-type }}
           - **Severity**: ${{ needs.incident-detection.outputs.severity }}
           - **Repository**: ${{ github.repository }}
           - **Branch**: ${{ github.ref_name }}
           - **Commit**: ${{ github.sha }}
           - **Trigger**: ${{ github.event_name }}
-          
+
           ## Response Summary
-          
+
           - ✅ Incident detected and classified
           - ✅ Automated response protocol activated
           - ✅ Security analysis completed
           - ✅ Remediation actions identified
           - ✅ Incident documentation generated
-          
+
           ## Artifacts Generated
-          
+
           - Security incident report
           - Incident response reports
           - Security forensics analysis (if applicable)
           - Incident summary documentation
-          
+
           ## Next Steps
-          
+
           1. Review all generated artifacts
           2. Implement recommended security fixes
           3. Update security policies and procedures
           4. Conduct post-incident review
           5. Update incident response procedures
-          
+
           ## Lessons Learned
-          
+
           - Automated incident response system performed as expected
           - Security monitoring and alerting systems functional
           - Incident classification and response times met SLA
           - Documentation and forensics capabilities validated
-          
+
           ---
-          
+
           **Security Incident Response System**
           **Automated Response Complete**
           EOF
-          
+
       - name: Upload Incident Summary
         uses: actions/upload-artifact@v4
         with:
           name: incident-summary
           path: incident-summary.md
           retention-days: 365
-          
+
       - name: Update Job Summary
         run: |
           echo "## 🔐 Security Incident Response Complete" >> $GITHUB_STEP_SUMMARY

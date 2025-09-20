@@ -154,7 +154,6 @@ jobs:
           name: tfsec-results
           path: tfsec-results.sarif
           retention-days: 30
-
 # Terraform auto-deployment removed for security
 # Manual deployment should be done through secure CI/CD pipeline
 # with proper approvals
