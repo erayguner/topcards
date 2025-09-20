@@ -1,5 +1,5 @@
 ---
-name: Baseline Security Checks
+name: MegaLinter Security Scan
 
 on:
   push:
@@ -7,32 +7,28 @@ on:
   pull_request:
     branches: [main, develop]
   schedule:
-    # Run daily at 02:00 UTC
     - cron: '0 2 * * *'
 
 permissions:
   contents: read
+  security-events: write
 
 jobs:
-  baseline-security:
-    name: Baseline Security Validation
+  mega-linter:
+    name: MegaLinter Security Validation
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          fetch-depth: 0
 
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Run npm audit (non-blocking)
-        run: |
-          npm audit --omit=dev --audit-level=high || echo "npm audit completed"
-
-      - name: Run project tests
-        run: npm test
+      - name: Run MegaLinter (security flavor)
+        uses: oxsecurity/megalinter@v8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MEGALINTER_CONFIG: .mega-linter.yml
+          MEGALINTER_FLAVOR: security
+          APPLY_FIXES: none
+          SECURITY_GITLEAKS_ARGUMENTS: --config-path .gitleaks.toml

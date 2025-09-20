@@ -1,0 +1,26 @@
+# MegaLinter configuration focused on baseline security checks for TopCards
+APPLY_FIXES: none
+IGNORE_GITIGNORED_FILES: true
+FILTER_REGEX_EXCLUDE: |
+  ^node_modules/
+  ^memory/
+  ^coordination/
+
+ENABLE_LINTERS:
+  - SECRET_GITLEAKS
+  - YAML_YAMLLINT
+  - JSON_JSONLINT
+  - MARKDOWN_MARKDOWNLINT
+  - BASH_SHFMT
+  - BASH_SHELLCHECK
+  - TERRAFORM_TFLINT
+  - TERRAFORM_TFSEC
+  - DOCKERFILE_HADOLINT
+
+REPORTERS:
+  - SARIF
+  - SUMMARY
+
+# Use project-specific configs when available
+YAML_YAMLLINT_CONFIG_FILE: .github/configs/yamllint.yml
+SECRET_GITLEAKS_ARGUMENTS: --config-path .gitleaks.toml

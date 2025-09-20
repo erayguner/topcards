@@ -136,9 +136,10 @@ Baseline security checks run without repository secrets. Optional tokens for adv
 
 | Tool | Configuration | Purpose |
 |------|--------------|---------|
-| npm audit | `package.json` | Non-blocking dependency advisory review |
-| npm test | `package.json` | Baseline project smoke test |
-| Pre-commit | `.pre-commit-config.yaml` | Optional local safeguards for contributors |
+| MegaLinter (security flavor) | `.mega-linter.yml` | Aggregated security linting (YAML, secrets, Terraform, shell, Docker) |
+| Gitleaks (via MegaLinter) | `.gitleaks.toml` | Custom secret detection baseline |
+| Yamllint (via MegaLinter) | `.github/configs/yamllint.yml` | Workflow YAML validation |
+| Pre-commit (local) | `.pre-commit-config.yaml` | Optional contributor safeguards |
 
 ## Security Workflows
 
