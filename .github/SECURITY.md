@@ -130,19 +130,15 @@ We take security seriously and provide security updates for the following versio
 
 ### Environment Variables
 
--Required secrets and env vars are stored in GitHub and injected at runtime:
-- `SEMGREP_APP_TOKEN` – Semgrep App token (stored as GitHub secret)
-- `GITLEAKS_LICENSE` – Optional enterprise license for Gitleaks
-- `GOOGLE_PROJECT_ID` / `GOOGLE_REGION` – Deployment targets managed via workflow `env`
+Baseline security checks run without repository secrets. Optional tokens for advanced scanning (Semgrep, TruffleHog, Gitleaks) remain disabled by default but can be re-enabled with the existing configuration files.
 
 ### Tool Configurations
 
-| Tool | Configuration | Features |
-|------|--------------|----------|
-| Gitleaks | `.gitleaks.toml` | 25+ rules, entropy detection |
-| Semgrep | `.semgrep.yml` | OWASP + custom rules |
-| Bandit | `.bandit` | Python security scanning |
-| Pre-commit | `.pre-commit-config.yaml` | 20+ hooks |
+| Tool | Configuration | Purpose |
+|------|--------------|---------|
+| npm audit | `package.json` | Non-blocking dependency advisory review |
+| npm test | `package.json` | Baseline project smoke test |
+| Pre-commit | `.pre-commit-config.yaml` | Optional local safeguards for contributors |
 
 ## Security Workflows
 
