@@ -48,7 +48,7 @@ jobs:
       - name: Security Scan Coordination
         id: security-status
         env:
-          INPUT_SCAN_LEVEL: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.security_level || '' }}
+          INPUT_SCAN_LEVEL_RAW: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.security_level || '' }}
         run: |
           echo "🔐 Starting Security Coordinator..."
 
@@ -62,12 +62,12 @@ jobs:
           mkdir -p security-reports
 
           # Security scan level determination
-          case "${INPUT_SCAN_LEVEL}" in
-            "")
+          case "${INPUT_SCAN_LEVEL_RAW}" in
+            ""|"false")
               SCAN_LEVEL="standard"
               ;;
             standard|comprehensive|critical-only)
-              SCAN_LEVEL="${INPUT_SCAN_LEVEL}"
+              SCAN_LEVEL="${INPUT_SCAN_LEVEL_RAW}"
               ;;
             *)
               echo "Invalid security scan level provided" >&2
