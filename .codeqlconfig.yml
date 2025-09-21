@@ -1,0 +1,28 @@
+# CodeQL configuration for enhanced security analysis
+name: "Security Configuration"
+
+disable-default-path-filters: false
+
+paths:
+  - ".claude/**/*.js"
+  - "scripts/**/*.js"
+  - "*.js"
+
+paths-ignore:
+  - "node_modules"
+  - ".git"
+  - "terraform"
+  - "docs"
+  - "**/*.md"
+  - "**/*.json"
+  - "**/*.yml"
+  - "**/*.yaml"
+
+queries:
+  - uses: security-extended
+  - uses: security-and-quality
+
+# Enhanced security query packs
+packs:
+  - "codeql/javascript-queries:Security"
+  - "codeql/javascript-queries:AlertSuppression"

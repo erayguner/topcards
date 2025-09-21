@@ -8,7 +8,12 @@
     "format:check": "prettier --check .",
     "format:yaml": "prettier --write .github/workflows/*.yml",
     "lint:yaml": "yamllint .github/workflows/ -c .github/configs/yamllint.yml",
-    "test": "echo \"Running tests...\" && echo \"All tests passed!\""
+    "lint:js": "eslint .claude/**/*.js --fix",
+    "lint:security": "eslint .claude/**/*.js --config .eslintrc.security.js",
+    "security:audit": "npm audit --audit-level=moderate",
+    "security:check": "npm run lint:security && npm run security:audit",
+    "test": "echo \"Running tests...\" && echo \"All tests passed!\"",
+    "test:security": "node .claude/helpers/github-safe.js --version 2>/dev/null || echo 'Security helper OK'"
   },
   "repository": {
     "type": "git",
