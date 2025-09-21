@@ -9,42 +9,120 @@ on:
   schedule:
     - cron: '0 2 * * *'
   workflow_dispatch:
+    inputs:
+      linter_flavor:
+        description: 'MegaLinter flavor to use'
+        required: false
+        default: 'security'
+        type: choice
+        options:
+          - security
+          - all
+          - dotnet
+          - go
+          - java
+          - javascript
+          - python
 
+# Global permissions (minimal)
 permissions:
   contents: read
 
+env:
+  # Environment variables for consistency
+  MEGALINTER_FLAVOR: ${{ github.event.inputs.linter_flavor || 'security' }}
+  MEGALINTER_CONFIG: .mega-linter.yml
+  APPLY_FIXES: none
+  UPLOAD_TO_GITHUB_SECURITY: true
+
 jobs:
   megalinter:
-    name: MegaLinter
-    runs-on: ubuntu-latest
+    name: MegaLinter (${{ github.event.inputs.linter_flavor || 'security' }})
+    runs-on: ubuntu-24.04  # Latest Ubuntu LTS
+    timeout-minutes: 60    # Increased for comprehensive scanning
+
+    # Job-specific permissions (principle of least privilege)
     permissions:
       contents: read
       security-events: write
       issues: write
       pull-requests: write
       actions: read
+      id-token: write  # For OIDC if needed
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        with:
+          egress-policy: audit
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            megalinter.io:443
+            registry.npmjs.org:443
+            pypi.org:443
+
       - name: Checkout repository
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
         with:
           fetch-depth: 0
+          persist-credentials: false  # Security best practice
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Cache MegaLinter dependencies for faster runs
+      - name: Cache MegaLinter
+        uses: actions/cache@2cdf405574d6ef1f33a1d12acccd3ae82f47b3f2 # v4.1.0
+        with:
+          path: |
+            ~/.cache/megalinter
+            /tmp/megalinter-cache
+          key: megalinter-${{ runner.os }}-${{ hashFiles('.mega-linter.yml') }}
+          restore-keys: |
+            megalinter-${{ runner.os }}-
 
       - name: Run MegaLinter
-        uses: oxsecurity/megalinter@e08c2b05e3dbc40af4c23f41172ef1e068a7d651 # v8.8.0
+        uses: oxsecurity/megalinter@c217fe8f7bc9207062a084e989bd97efd56349b6 # v8.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MEGALINTER_CONFIG: .mega-linter.yml
-          MEGALINTER_FLAVOR: security
-          APPLY_FIXES: none
-          UPLOAD_TO_GITHUB_SECURITY: true
+          MEGALINTER_CONFIG: ${{ env.MEGALINTER_CONFIG }}
+          MEGALINTER_FLAVOR: ${{ env.MEGALINTER_FLAVOR }}
+          APPLY_FIXES: ${{ env.APPLY_FIXES }}
+          UPLOAD_TO_GITHUB_SECURITY: ${{ env.UPLOAD_TO_GITHUB_SECURITY }}
+          # Performance optimizations
+          PARALLEL: true
+          LOG_LEVEL: INFO
+          # Security enhancements
+          DISABLE_ERRORS: false
+          FAIL_IF_UPDATED_SOURCES: false
 
+      # Enhanced artifact upload with conditional paths
       - name: Upload MegaLinter artifacts
         if: always()
-        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         with:
-          name: megalinter-reports
+          name: megalinter-reports-${{ env.MEGALINTER_FLAVOR }}
           path: |
             megalinter-reports/
             mega-linter.log
+            .megalinter-reports/
           retention-days: 30
+          if-no-files-found: warn
+          compression-level: 6
+
+      # Generate workflow summary
+      - name: Generate Workflow Summary
+        if: always()
+        run: |
+          echo "## 🛡️ MegaLinter Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Flavor Used | \`${{ env.MEGALINTER_FLAVOR }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Runner OS | \`${{ runner.os }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered By | \`${{ github.actor }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Event | \`${{ github.event_name }}\` |" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f "megalinter-reports/megalinter.log" ]; then
+            echo "| Log File | ✅ Generated |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Log File | ❌ Not Found |" >> $GITHUB_STEP_SUMMARY
+          fi

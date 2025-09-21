@@ -1,0 +1,169 @@
+---
+name: Dependency Review & Security
+
+on:
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run weekly dependency audit on Mondays at 6 AM UTC
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Type of dependency scan to run'
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - vulnerabilities-only
+          - licenses-only
+
+# Global permissions (minimal)
+permissions:
+  contents: read
+
+env:
+  # Environment variables for consistency
+  SCAN_TYPE: ${{ github.event.inputs.scan_type || 'full' }}
+
+jobs:
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 15
+
+    permissions:
+      contents: read
+      pull-requests: write
+      security-events: write
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+        with:
+          persist-credentials: false
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@5a2ce3f5b92ee19cbb1541a4984c76d921601d7c # v4.3.4
+        with:
+          fail-on-severity: moderate
+          fail-on-scopes: runtime
+          allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD
+          deny-licenses: GPL-2.0, GPL-3.0, LGPL-2.0, LGPL-2.1, LGPL-3.0
+          comment-summary-in-pr: true
+          warn-only: false
+
+  dependency-audit:
+    name: Dependency Security Audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+        with:
+          persist-credentials: false
+
+      # Node.js dependency scanning
+      - name: Setup Node.js
+        if: hashFiles('package.json') != ''
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4.0.4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: hashFiles('package.json') != ''
+        run: |
+          npm ci --audit=false
+
+      - name: Run npm audit
+        if: hashFiles('package.json') != ''
+        run: |
+          npm audit --audit-level=moderate --json > npm-audit-results.json || true
+
+      - name: Upload npm audit results
+        if: hashFiles('package.json') != '' && always()
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: npm-audit-results
+          path: npm-audit-results.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+      # SBOM Generation for supply chain security
+      - name: Generate SBOM
+        uses: anchore/sbom-action@d94f46e13c6c62f59525ac9a1e147a99dc0b9bf5 # v0.17.0
+        with:
+          format: spdx-json
+          output-file: sbom.spdx.json
+          upload-artifact: true
+          upload-release-assets: false
+
+      - name: Upload SBOM
+        if: always()
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: sbom-report
+          path: sbom.spdx.json
+          retention-days: 90
+          if-no-files-found: warn
+
+  supply-chain-security:
+    name: Supply Chain Security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+        with:
+          persist-credentials: false
+
+      # OSSF Scorecard for supply chain security assessment
+      - name: Run OSSF Scorecard
+        uses: ossf/scorecard-action@62b2cac7ed8198b15735ed49ab1e5cf35480ba46 # v2.4.0
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+
+      - name: Upload OSSF Scorecard results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@c36620d31ac7c881962c3d9dd939c40ec9434f2b # v3.26.12
+        with:
+          sarif_file: results.sarif
+          category: ossf-scorecard
+
+      - name: Upload OSSF Scorecard results as artifact
+        if: always()
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: scorecard-results
+          path: results.sarif
+          retention-days: 30

@@ -1,30 +1,90 @@
-# MegaLinter configuration focused on baseline security checks for TopCards
+# MegaLinter configuration for comprehensive security and quality scanning
+# Performance and efficiency optimizations for 2024
+
+# Core settings
 APPLY_FIXES: none
 IGNORE_GITIGNORED_FILES: true
+SHOW_ELAPSED_TIME: true
+LOG_LEVEL: INFO
+PARALLEL: true
+
+# File filtering for performance optimization
 FILTER_REGEX_EXCLUDE: |
   ^node_modules/
   ^memory/
   ^coordination/
+  ^\.git/
+  ^\.claude/
+  ^\.hive-mind/
   scripts/
 
-# Disable problematic linters
-DISABLE_LINTERS:
-  - BASH_SHELLCHECK
-
+# Security-focused linter selection (optimized for this repository)
 ENABLE_LINTERS:
+  # Secrets and security
   - SECRET_GITLEAKS
+  - SECRET_SECRETLINT
+  # Code quality
   - YAML_YAMLLINT
   - JSON_JSONLINT
   - MARKDOWN_MARKDOWNLINT
+  - JAVASCRIPT_ES
+  - JAVASCRIPT_PRETTIER
+  # Infrastructure security
   - TERRAFORM_TFLINT
   - TERRAFORM_TFSEC
+  - TERRAFORM_CHECKOV
   - DOCKERFILE_HADOLINT
+  # GitHub Actions security
+  - ACTION_ACTIONLINT
 
+# Disable problematic or redundant linters
+DISABLE_LINTERS:
+  - BASH_SHELLCHECK  # Disabled due to parsing issues with complex scripts
+  - COPYPASTE_JSCPD  # Can be noisy and slow
+  - SPELL_CSPELL     # Managed separately
+
+# Enhanced reporting
 REPORTERS:
   - SARIF
   - SUMMARY
+  - CONSOLE
+  - GITHUB_COMMENT
 
-# Use project-specific configs when available
+# Linter-specific configurations
 YAML_YAMLLINT_CONFIG_FILE: .github/configs/yamllint.yml
 SECRET_GITLEAKS_ARGUMENTS: --config-path .gitleaks.toml
 TERRAFORM_TFLINT_CONFIG_FILE: .tflint.hcl
+JAVASCRIPT_ES_CONFIG_FILE: .eslintrc.security.js
+
+# Performance optimizations
+FILEIO_REPORTER: false
+MEGALINTER_FILES_TO_LINT: |
+  .github/**/*
+  .claude/**/*.js
+  *.md
+  *.yml
+  *.yaml
+  *.json
+  terraform/**/*
+
+# Security enhancements
+SECURED_ENV_VARIABLES: |
+  GITHUB_TOKEN
+
+# Failure handling
+FAIL_IF_MISSING_LINTER_IN_FLAVOR: false
+DISABLE_ERRORS: false
+
+# GitHub integration
+GITHUB_COMMENT_REPORTER: true
+GITHUB_STATUS_REPORTER: true
+GITHUB_COMMENT_BEHAVIOR: update_if_exists
+
+# Custom commands for enhanced security checks
+PRE_COMMANDS:
+  - command: echo "🔍 Starting comprehensive security and quality scan..."
+    cwd: "root"
+
+POST_COMMANDS:
+  - command: echo "✅ Security scan completed. Check reports for findings."
+    cwd: "root"

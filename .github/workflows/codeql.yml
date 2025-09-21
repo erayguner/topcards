@@ -11,38 +11,68 @@ on:
     - cron: '0 3 * * 0'
   workflow_dispatch:
 
+# Global permissions (minimal)
 permissions:
   contents: read
+
+env:
+  # Environment variables for consistency
+  CODEQL_LANGUAGES: 'javascript'
+  CODEQL_QUERIES: 'security-extended,security-and-quality'
 
 jobs:
   codeql:
     name: CodeQL SAST Analysis
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    runs-on: ubuntu-24.04  # Latest Ubuntu LTS
+    timeout-minutes: 45    # Increased for thorough analysis
+
+    # Job-specific permissions (principle of least privilege)
     permissions:
       contents: read
       security-events: write
       actions: read
+      id-token: write  # For OIDC if needed
 
     strategy:
       fail-fast: false
       matrix:
         language: ['javascript']
+        include:
+          - language: javascript
+            build-mode: none
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
         with:
           fetch-depth: 0
+          persist-credentials: false  # Security best practice
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@192325c86100d080feab897ff886c34abd4c83a3 # v3.29.0
+        uses: github/codeql-action/init@c36620d31ac7c881962c3d9dd939c40ec9434f2b # v3.26.12
         with:
-          languages: ${{ matrix.language }}
-          queries: security-extended,security-and-quality
+          languages: ${{ env.CODEQL_LANGUAGES }}
+          queries: ${{ env.CODEQL_QUERIES }}
           config-file: ./.codeqlconfig.yml
+          build-mode: ${{ matrix.build-mode }}
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@192325c86100d080feab897ff886c34abd4c83a3 # v3.29.0
+        uses: github/codeql-action/analyze@c36620d31ac7c881962c3d9dd939c40ec9434f2b # v3.26.12
         with:
           category: "/language:${{ matrix.language }}"
+          upload: true
+
+      # Enhanced reporting and artifacts
+      - name: Upload CodeQL Results as Artifact
+        if: always()
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: codeql-results-${{ matrix.language }}
+          path: /home/runner/work/_temp/codeql_databases/
+          retention-days: 30
+          if-no-files-found: warn
