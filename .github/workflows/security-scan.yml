@@ -1,5 +1,5 @@
 ---
-name: MegaLinter Security Scan
+name: MegaLinter Security & Quality Scan
 
 on:
   push:
@@ -8,19 +8,21 @@ on:
     branches: [main, develop]
   schedule:
     - cron: '0 2 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  mega-linter:
-    name: MegaLinter Security Validation
+  megalinter:
+    name: MegaLinter
     runs-on: ubuntu-latest
     permissions:
       contents: read
       security-events: write
       issues: write
       pull-requests: write
+      actions: read
 
     steps:
       - name: Checkout repository
@@ -28,11 +30,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run MegaLinter (security flavor)
+      - name: Run MegaLinter
         uses: oxsecurity/megalinter@e08c2b05e3dbc40af4c23f41172ef1e068a7d651 # v8.8.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MEGALINTER_CONFIG: .mega-linter.yml
           MEGALINTER_FLAVOR: security
           APPLY_FIXES: none
-          SECURITY_GITLEAKS_ARGUMENTS: --config-path .gitleaks.toml
+          UPLOAD_TO_GITHUB_SECURITY: true
+
+      - name: Upload MegaLinter artifacts
+        if: always()
+        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
+        with:
+          name: megalinter-reports
+          path: |
+            megalinter-reports/
+            mega-linter.log
+          retention-days: 30
