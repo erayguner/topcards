@@ -10,18 +10,20 @@ on:
 
 permissions:
   contents: read
-  actions: read
 
 jobs:
   dependency-check:
     name: 'OWASP Dependency Check'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
 
       - name: Run OWASP Dependency Check
-        uses: dependency-check/Dependency-Check_Action@main
+        uses: dependency-check/Dependency-Check_Action@2d4ce8ea44b33b47e5b3e10a98a04a0c8bcbdf1c # v7.4.4
         continue-on-error: true
         with:
           project: 'topcards'
@@ -36,7 +38,7 @@ jobs:
 
       - name: Upload Dependency Check results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
         with:
           name: dependency-check-report
           path: reports/
@@ -48,11 +50,11 @@ jobs:
     continue-on-error: true
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
 
       - name: Set up Node.js
         if: ${{ hashFiles('package.json') != '' }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
         with:
           node-version: '20'
 
@@ -71,7 +73,7 @@ jobs:
         if: >-
           ${{ hashFiles('requirements.txt') != '' || hashFiles('Pipfile') != ''
           || hashFiles('pyproject.toml') != '' }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.2.0
         with:
           python-version: '3.11'
 
@@ -96,7 +98,7 @@ jobs:
     continue-on-error: true
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
 
       - name: Check for Docker files
         id: docker-check
@@ -123,7 +125,7 @@ jobs:
           fi
 
       - name: Run Trivy vulnerability scanner on filesystem
-        uses: aquasecurity/trivy-action@0.16.1
+        uses: aquasecurity/trivy-action@fd25fed6972e341ff0007ddb61f77e88103953c2 # 0.16.1
         continue-on-error: true
         with:
           scan-type: 'fs'
@@ -133,7 +135,7 @@ jobs:
 
       - name: Run Trivy vulnerability scanner on image
         if: steps.docker-build.outputs.build-success == 'true'
-        uses: aquasecurity/trivy-action@0.16.1
+        uses: aquasecurity/trivy-action@fd25fed6972e341ff0007ddb61f77e88103953c2 # 0.16.1
         continue-on-error: true
         with:
           image-ref: 'security-scan:latest'
@@ -142,7 +144,7 @@ jobs:
 
       - name: Upload Trivy filesystem scan results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
         continue-on-error: true
         with:
           name: trivy-fs-results
@@ -151,7 +153,7 @@ jobs:
 
       - name: Upload Trivy image scan results
         if: steps.docker-build.outputs.build-success == 'true' && always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
         continue-on-error: true
         with:
           name: trivy-image-results
@@ -168,26 +170,26 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
         with:
           persist-credentials: false
 
       - name: Run analysis
-        uses: ossf/scorecard-action@v2.3.1
+        uses: ossf/scorecard-action@0864cf19026789058feabb7e87baa5f140aac736 # v2.3.1
         with:
           results_file: results.sarif
           results_format: sarif
           publish_results: true
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
         with:
           name: SARIF file
           path: results.sarif
           retention-days: 5
 
       - name: Upload SARIF to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@192325c86100d080feab897ff886c34abd4c83a3 # v3.29.0
         with:
           sarif_file: results.sarif
           category: security-scorecard
