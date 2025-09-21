@@ -16,6 +16,10 @@ instance_count = 1
 # CIDR blocks allowed to access infrastructure
 allowed_cidr_blocks = ["0.0.0.0/0"]
 
+# API management
+enable_apis = true
+# additional_project_services = ["cloudkms.googleapis.com"]
+
 # Resource labels
 labels = {
   environment = "dev"

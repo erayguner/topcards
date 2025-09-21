@@ -25,7 +25,7 @@ resource "google_storage_bucket" "access_logs" {
     }
   }
 
-  depends_on = [google_project_service.storage_api]
+  depends_on = var.enable_apis ? [google_project_service.required["storage.googleapis.com"]] : []
 }
 
 # Storage bucket for application data
@@ -60,7 +60,10 @@ resource "google_storage_bucket" "app_bucket" {
     log_object_prefix = "access-logs/"
   }
 
-  depends_on = [google_project_service.storage_api, google_storage_bucket.access_logs]
+  depends_on = concat(
+    var.enable_apis ? [google_project_service.required["storage.googleapis.com"]] : [],
+    [google_storage_bucket.access_logs]
+  )
 }
 
 # Simple GCP storage bucket for general use
@@ -94,5 +97,5 @@ resource "google_storage_bucket" "simple_bucket" {
     managed_by  = "terraform"
   }
 
-  depends_on = [google_project_service.storage_api]
+  depends_on = var.enable_apis ? [google_project_service.required["storage.googleapis.com"]] : []
 }

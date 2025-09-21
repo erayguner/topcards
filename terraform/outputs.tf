@@ -99,15 +99,7 @@ output "firewall_rules" {
 
 output "enabled_apis" {
   description = "List of enabled GCP APIs"
-  value = var.enable_apis ? [
-    google_project_service.compute_api[0].service,
-    google_project_service.storage_api[0].service,
-    google_project_service.iam_api[0].service,
-    google_project_service.sql_api[0].service,
-    google_project_service.networking_api[0].service,
-    google_project_service.secretmanager_api[0].service,
-    google_project_service.bigquery_api[0].service
-  ] : []
+  value       = var.enable_apis ? sort(keys(google_project_service.required)) : []
 }
 
 # Database outputs

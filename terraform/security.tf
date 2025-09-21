@@ -22,7 +22,7 @@ resource "google_service_account" "app_service_account" {
   display_name = "Application Service Account"
   description  = "Service account for application compute instances"
 
-  depends_on = [google_project_service.iam_api]
+  depends_on = var.enable_apis ? [google_project_service.required["iam.googleapis.com"]] : []
 }
 
 # IAM binding for service account - Storage Admin
@@ -81,7 +81,7 @@ resource "google_secret_manager_secret" "db_password" {
     auto {}
   }
 
-  depends_on = [google_project_service.secretmanager_api]
+  depends_on = var.enable_apis ? [google_project_service.required["secretmanager.googleapis.com"]] : []
 }
 
 resource "google_secret_manager_secret_version" "db_password_version" {

@@ -72,6 +72,12 @@ variable "enable_apis" {
   default     = true
 }
 
+variable "additional_project_services" {
+  description = "Additional project services to enable alongside the defaults"
+  type        = set(string)
+  default     = []
+}
+
 variable "labels" {
   description = "Labels to apply to resources"
   type        = map(string)

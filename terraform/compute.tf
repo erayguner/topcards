@@ -94,8 +94,8 @@ resource "google_compute_instance" "app_instance" {
     block-project-ssh-keys = "true"
   }
 
-  depends_on = [
-    google_project_service.compute_api,
-    google_service_account.app_service_account
-  ]
+  depends_on = concat(
+    var.enable_apis ? [google_project_service.required["compute.googleapis.com"]] : [],
+    [google_service_account.app_service_account]
+  )
 }

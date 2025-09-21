@@ -28,7 +28,7 @@ resource "google_bigquery_dataset" "csv_dataset" {
     managed_by  = "terraform"
   }
 
-  depends_on = [google_project_service.bigquery_api]
+  depends_on = var.enable_apis ? [google_project_service.required["bigquery.googleapis.com"]] : []
 }
 
 # BigQuery external table for CSV files in simple bucket
