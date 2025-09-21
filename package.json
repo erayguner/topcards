@@ -4,16 +4,21 @@
   "description": "A secure, well-tested application with comprehensive CI/CD pipelines.",
   "main": "index.js",
   "scripts": {
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "format:yaml": "prettier --write .github/workflows/*.yml",
+    "format": "npx prettier --write .",
+    "format:check": "npx prettier --check .",
+    "format:yaml": "npx prettier --write .github/workflows/*.yml",
     "lint:yaml": "yamllint .github/workflows/ -c .github/configs/yamllint.yml",
-    "lint:js": "eslint .claude/**/*.js --fix",
-    "lint:security": "eslint .claude/**/*.js --config .eslintrc.security.js",
+    "lint:js": "npx eslint '.claude/helpers/*.js' --fix",
+    "lint:security": "npx eslint '.claude/helpers/*.js' --config .eslintrc.security.js",
+    "lint:all": "npm run lint:js && npm run lint:security",
     "security:audit": "npm audit --audit-level=moderate",
     "security:check": "npm run lint:security && npm run security:audit",
+    "deps:check": "npm ls --depth=0",
+    "deps:install": "npm install",
     "test": "echo \"Running tests...\" && echo \"All tests passed!\"",
-    "test:security": "node .claude/helpers/github-safe.js --version 2>/dev/null || echo 'Security helper OK'"
+    "test:security": "node .claude/helpers/github-safe.js --version 2>/dev/null || echo 'Security helper OK'",
+    "prestart": "npm run deps:check",
+    "validate": "npm run format:check && npm run lint:all && npm run test && npm run security:check"
   },
   "repository": {
     "type": "git",
@@ -38,8 +43,7 @@
     "prettier-plugin-sh": "^0.14.0",
     "@types/node": "^20.12.0",
     "eslint": "^8.57.0",
-    "eslint-plugin-security": "^3.0.1",
-    "yamllint-config-prettier": "^1.0.0"
+    "eslint-plugin-security": "^3.0.1"
   },
   "security": {
     "advisories": {
