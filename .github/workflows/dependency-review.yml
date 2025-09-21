@@ -41,7 +41,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2.11.1
+        uses: step-security/harden-runner@v2.12.0
         with:
           egress-policy: audit
 
@@ -55,8 +55,7 @@ jobs:
         with:
           fail-on-severity: moderate
           fail-on-scopes: runtime
-          allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD
-          deny-licenses: GPL-2.0, GPL-3.0, LGPL-2.0, LGPL-2.1, LGPL-3.0
+          allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Unlicense, WTFPL, CC0-1.0
           comment-summary-in-pr: true
           warn-only: false
 
@@ -72,7 +71,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2.11.1
+        uses: step-security/harden-runner@v2.12.0
         with:
           egress-policy: audit
 
@@ -137,7 +136,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2.11.1
+        uses: step-security/harden-runner@v2.12.0
         with:
           egress-policy: audit
 
