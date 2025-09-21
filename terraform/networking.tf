@@ -4,7 +4,7 @@ resource "google_compute_network" "vpc_network" {
   auto_create_subnetworks = false
   mtu                     = 1460
 
-  depends_on = [google_project_service.compute_api]
+  depends_on = var.enable_apis ? [google_project_service.required["compute.googleapis.com"]] : []
 }
 
 # Subnet
@@ -109,7 +109,7 @@ resource "google_compute_global_address" "private_ip_address" {
   prefix_length = 16
   network       = google_compute_network.vpc_network.id
 
-  depends_on = [google_project_service.networking_api]
+  depends_on = var.enable_apis ? [google_project_service.required["servicenetworking.googleapis.com"]] : []
 }
 
 # Private connection for Cloud SQL
@@ -118,5 +118,5 @@ resource "google_service_networking_connection" "private_vpc_connection" {
   service                 = "servicenetworking.googleapis.com"
   reserved_peering_ranges = [google_compute_global_address.private_ip_address.name]
 
-  depends_on = [google_project_service.networking_api]
+  depends_on = var.enable_apis ? [google_project_service.required["servicenetworking.googleapis.com"]] : []
 }

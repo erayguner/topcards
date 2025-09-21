@@ -48,13 +48,7 @@ No modules.
 | [google_project_iam_member.app_sa_secret_accessor](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_project_iam_member.app_sa_sql_client](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_project_iam_member.app_sa_storage_admin](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
-| [google_project_service.bigquery_api](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
-| [google_project_service.compute_api](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
-| [google_project_service.iam_api](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
-| [google_project_service.networking_api](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
-| [google_project_service.secretmanager_api](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
-| [google_project_service.sql_api](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
-| [google_project_service.storage_api](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
+| [google_project_service.required](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
 | [google_secret_manager_secret.db_password](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret) | resource |
 | [google_secret_manager_secret_version.db_password_version](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_version) | resource |
 | [google_service_account.app_service_account](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
@@ -79,6 +73,7 @@ No modules.
 | <a name="input_db_user"></a> [db\_user](#input\_db\_user) | Username for the application database user | `string` | `"app_user"` | no |
 | <a name="input_db_version"></a> [db\_version](#input\_db\_version) | PostgreSQL version for Cloud SQL instance | `string` | `"POSTGRES_16"` | no |
 | <a name="input_enable_apis"></a> [enable\_apis](#input\_enable\_apis) | Whether to enable required GCP APIs | `bool` | `true` | no |
+| <a name="input_additional_project_services"></a> [additional\_project\_services](#input\_additional\_project\_services) | Additional project services to enable alongside the defaults | `set(string)` | `[]` | no |
 | <a name="input_enable_database"></a> [enable\_database](#input\_enable\_database) | Whether to create Cloud SQL database resources | `bool` | `true` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | Environment name (dev, staging, prod) | `string` | `"dev"` | no |
 | <a name="input_instance_count"></a> [instance\_count](#input\_instance\_count) | Number of compute instances to create | `number` | `1` | no |

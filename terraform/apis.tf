@@ -1,56 +1,24 @@
-# Enable required APIs
-resource "google_project_service" "compute_api" {
-  count   = var.enable_apis ? 1 : 0
-  service = "compute.googleapis.com"
+# Enable required APIs using a single managed resource set
+locals {
+  default_project_services = [
+    "bigquery.googleapis.com",
+    "compute.googleapis.com",
+    "iam.googleapis.com",
+    "secretmanager.googleapis.com",
+    "servicenetworking.googleapis.com",
+    "sqladmin.googleapis.com",
+    "storage.googleapis.com"
+  ]
 
-  disable_dependent_services = true
-  disable_on_destroy         = false
+  combined_project_services = distinct(
+    concat(local.default_project_services, tolist(var.additional_project_services))
+  )
 }
 
-resource "google_project_service" "storage_api" {
-  count   = var.enable_apis ? 1 : 0
-  service = "storage.googleapis.com"
+resource "google_project_service" "required" {
+  for_each = var.enable_apis ? { for service in local.combined_project_services : service => service } : {}
 
-  disable_dependent_services = true
-  disable_on_destroy         = false
-}
-
-resource "google_project_service" "iam_api" {
-  count   = var.enable_apis ? 1 : 0
-  service = "iam.googleapis.com"
-
-  disable_dependent_services = true
-  disable_on_destroy         = false
-}
-
-resource "google_project_service" "sql_api" {
-  count   = var.enable_apis ? 1 : 0
-  service = "sqladmin.googleapis.com"
-
-  disable_dependent_services = true
-  disable_on_destroy         = false
-}
-
-resource "google_project_service" "networking_api" {
-  count   = var.enable_apis ? 1 : 0
-  service = "servicenetworking.googleapis.com"
-
-  disable_dependent_services = true
-  disable_on_destroy         = false
-}
-
-resource "google_project_service" "bigquery_api" {
-  count   = var.enable_apis ? 1 : 0
-  service = "bigquery.googleapis.com"
-
-  disable_dependent_services = true
-  disable_on_destroy         = false
-}
-
-resource "google_project_service" "secretmanager_api" {
-  count   = var.enable_apis ? 1 : 0
-  service = "secretmanager.googleapis.com"
-
+  service                    = each.value
   disable_dependent_services = true
   disable_on_destroy         = false
 }
