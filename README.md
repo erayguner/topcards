@@ -1,10 +1,7 @@
 # TopCards
 
-[![Terraform CI/CD](https://github.com/erayguner/topcards/workflows/Terraform%20CI%2FCD/badge.svg)](https://github.com/erayguner/topcards/actions/workflows/terraform.yml)
-[![Terraform Security Scanning](https://github.com/erayguner/topcards/workflows/Terraform%20Security%20Scanning/badge.svg)](https://github.com/erayguner/topcards/actions/workflows/terraform-security.yml)
-[![Security Policy Enforcement](https://github.com/erayguner/topcards/workflows/Security%20Policy%20Enforcement/badge.svg)](https://github.com/erayguner/topcards/actions/workflows/security-policy.yml)
-[![Security Scanning](https://github.com/erayguner/topcards/workflows/Security%20Scanning/badge.svg)](https://github.com/erayguner/topcards/actions/workflows/security-scan.yml)
-[![Secret Scanning](https://github.com/erayguner/topcards/workflows/Secret%20Scanning/badge.svg)](https://github.com/erayguner/topcards/actions/workflows/secret-scanning.yml)
+[![CodeQL Security Analysis](https://github.com/erayguner/topcards/workflows/CodeQL%20Security%20Analysis/badge.svg)](https://github.com/erayguner/topcards/actions/workflows/codeql.yml)
+[![MegaLinter Security & Quality Scan](https://github.com/erayguner/topcards/workflows/MegaLinter%20Security%20%26%20Quality%20Scan/badge.svg)](https://github.com/erayguner/topcards/actions/workflows/security-scan.yml)
 
 ![GitHub issues](https://img.shields.io/github/issues/erayguner/topcards)
 ![GitHub pull requests](https://img.shields.io/github/issues-pr/erayguner/topcards)
@@ -21,42 +18,35 @@ A secure, well-tested application with comprehensive CI/CD pipelines.
 
 ## Security & CI/CD
 
-This repository includes comprehensive GitHub Actions workflows for:
+This repository uses a streamlined, comprehensive security approach with two powerful workflows:
 
-### 🔒 Security Scanning
+### 🔒 CodeQL Security Analysis
 
-- **Secret Detection**: Multi-tool scanning with TruffleHog, Gitleaks, Semgrep, and detect-secrets
-- **Dependency Scanning**: OWASP dependency vulnerability checks
-- **Code Analysis**: CodeQL security analysis
-- **Container Security**: Trivy vulnerability scanning
-- **License Compliance**: Automated license validation
-- **Security Scorecard**: OSSF security posture assessment
+- **Static Application Security Testing (SAST)**: Advanced security vulnerability detection
+- **Security-Extended Queries**: Comprehensive security pattern analysis
+- **GitHub Security Integration**: Automatic security alerts and reporting
+- **Scheduled Scanning**: Weekly automated security assessments
 
-### 🏗️ Infrastructure
+### 🛡️ MegaLinter Security & Quality
 
-- **Terraform CI/CD**: Validation, planning, security scanning, and automated deployment
-- **Format Checking**: Automated Terraform formatting validation
-- **Security Scanning**: Checkov and TFSec integration
-- **Plan Comments**: Automated PR comments with Terraform plans
-
-### 📊 Monitoring & Reporting
-
-- **SARIF Integration**: Security findings uploaded to GitHub Advanced Security
-- **Automated Summaries**: Comprehensive security and deployment reports
-- **Scheduled Scans**: Daily security assessments
-- **Performance Tracking**: Workflow execution metrics
+- **Comprehensive Scanning**: 70+ linters in security flavor
+- **Secret Detection**: Gitleaks integration for credential scanning
+- **Code Quality**: YAML, JSON, Markdown, and Terraform validation
+- **Container Security**: Dockerfile analysis with Hadolint
+- **Infrastructure Security**: Terraform security scanning with TFSec
+- **Automated Reporting**: SARIF format with GitHub Security integration
 
 ## Workflows
 
-- `.github/workflows/terraform.yml` - Terraform CI/CD pipeline
-- `.github/workflows/secret-scanning.yml` - Multi-tool secret detection
-- `.github/workflows/security-policy.yml` - Security policy enforcement
+- `.github/workflows/codeql.yml` - CodeQL static application security testing
+- `.github/workflows/security-scan.yml` - MegaLinter comprehensive security & quality scanning
 
 ## Getting Started
 
-1. Configure your Terraform backend in `terraform/` directory
-2. Set up required GitHub secrets for deployment
-3. Push to trigger automated security scanning and validation
+1. Fork or clone this repository
+2. Push changes to trigger automated security scanning
+3. Review security findings in GitHub Security tab
+4. Use the comprehensive security setup as a template for your projects
 
 ## Security
 
