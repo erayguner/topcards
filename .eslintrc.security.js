@@ -5,7 +5,6 @@ module.exports = {
   },
   extends: [
     'eslint:recommended',
-    'plugin:security/recommended',
   ],
   plugins: ['security'],
   parserOptions: {
