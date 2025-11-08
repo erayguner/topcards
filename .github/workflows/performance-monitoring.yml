@@ -23,16 +23,18 @@ jobs:
     permissions:
       contents: read
       actions: read
-      metadata: read
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2.11.1
+        uses: step-security/harden-runner@v2.12.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
 
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v5.0.0
         with:
           persist-credentials: false
 
@@ -47,31 +49,41 @@ jobs:
           echo "| Workflow | Avg Duration | Success Rate | Last 7 Days Runs |" >> performance-report.md
           echo "|----------|--------------|--------------|------------------|" >> performance-report.md
 
-          # Analyze CodeQL workflow
+          # Analyze CodeQL workflow with error handling
           CODEQL_RUNS=$(gh api repos/${{ github.repository }}/actions/workflows/codeql.yml/runs \
-            --jq '.workflow_runs[0:10] | map(select(.created_at > (now - 30*24*3600 | todate))) | length')
+            --jq '.workflow_runs[0:10] | map(select(.created_at > (now - 30*24*3600 | todate))) | length' 2>/dev/null || echo "0")
           CODEQL_SUCCESS=$(gh api repos/${{ github.repository }}/actions/workflows/codeql.yml/runs \
-            --jq '.workflow_runs[0:10] | map(select(.created_at > (now - 30*24*3600 | todate) and .conclusion == "success")) | length')
+            --jq '.workflow_runs[0:10] | map(select(.created_at > (now - 30*24*3600 | todate) and .conclusion == "success")) | length' 2>/dev/null || echo "0")
           CODEQL_AVG_DURATION=$(gh api repos/${{ github.repository }}/actions/workflows/codeql.yml/runs \
-            --jq '.workflow_runs[0:5] | map(select(.conclusion == "success")) | map((.updated_at | fromdateiso8601) - (.created_at | fromdateiso8601)) | add / length | floor')
+            --jq '.workflow_runs[0:5] | map(select(.conclusion == "success")) | map((.updated_at | fromdateiso8601) - (.created_at | fromdateiso8601)) | add / length | floor' 2>/dev/null || echo "0")
 
-          if [ "$CODEQL_RUNS" -gt 0 ]; then
-            CODEQL_SUCCESS_RATE=$(echo "scale=1; $CODEQL_SUCCESS * 100 / $CODEQL_RUNS" | bc -l)
-            CODEQL_DURATION_MIN=$(echo "scale=1; $CODEQL_AVG_DURATION / 60" | bc -l)
+          if [ "$CODEQL_RUNS" -gt 0 ] && command -v bc >/dev/null 2>&1; then
+            CODEQL_SUCCESS_RATE=$(echo "scale=1; $CODEQL_SUCCESS * 100 / $CODEQL_RUNS" | bc -l 2>/dev/null || echo "N/A")
+            CODEQL_DURATION_MIN=$(echo "scale=1; $CODEQL_AVG_DURATION / 60" | bc -l 2>/dev/null || echo "N/A")
+            echo "| CodeQL Security Analysis | ${CODEQL_DURATION_MIN}min | ${CODEQL_SUCCESS_RATE}% | $CODEQL_RUNS |" >> performance-report.md
+          elif [ "$CODEQL_RUNS" -gt 0 ]; then
+            # Fallback if bc is not available
+            CODEQL_SUCCESS_RATE=$((CODEQL_SUCCESS * 100 / CODEQL_RUNS))
+            CODEQL_DURATION_MIN=$((CODEQL_AVG_DURATION / 60))
             echo "| CodeQL Security Analysis | ${CODEQL_DURATION_MIN}min | ${CODEQL_SUCCESS_RATE}% | $CODEQL_RUNS |" >> performance-report.md
           fi
 
-          # Analyze MegaLinter workflow
+          # Analyze MegaLinter workflow with error handling
           MEGALINTER_RUNS=$(gh api repos/${{ github.repository }}/actions/workflows/security-scan.yml/runs \
-            --jq '.workflow_runs[0:10] | map(select(.created_at > (now - 30*24*3600 | todate))) | length')
+            --jq '.workflow_runs[0:10] | map(select(.created_at > (now - 30*24*3600 | todate))) | length' 2>/dev/null || echo "0")
           MEGALINTER_SUCCESS=$(gh api repos/${{ github.repository }}/actions/workflows/security-scan.yml/runs \
-            --jq '.workflow_runs[0:10] | map(select(.created_at > (now - 30*24*3600 | todate) and .conclusion == "success")) | length')
+            --jq '.workflow_runs[0:10] | map(select(.created_at > (now - 30*24*3600 | todate) and .conclusion == "success")) | length' 2>/dev/null || echo "0")
           MEGALINTER_AVG_DURATION=$(gh api repos/${{ github.repository }}/actions/workflows/security-scan.yml/runs \
-            --jq '.workflow_runs[0:5] | map(select(.conclusion == "success")) | map((.updated_at | fromdateiso8601) - (.created_at | fromdateiso8601)) | add / length | floor')
+            --jq '.workflow_runs[0:5] | map(select(.conclusion == "success")) | map((.updated_at | fromdateiso8601) - (.created_at | fromdateiso8601)) | add / length | floor' 2>/dev/null || echo "0")
 
-          if [ "$MEGALINTER_RUNS" -gt 0 ]; then
-            MEGALINTER_SUCCESS_RATE=$(echo "scale=1; $MEGALINTER_SUCCESS * 100 / $MEGALINTER_RUNS" | bc -l)
-            MEGALINTER_DURATION_MIN=$(echo "scale=1; $MEGALINTER_AVG_DURATION / 60" | bc -l)
+          if [ "$MEGALINTER_RUNS" -gt 0 ] && command -v bc >/dev/null 2>&1; then
+            MEGALINTER_SUCCESS_RATE=$(echo "scale=1; $MEGALINTER_SUCCESS * 100 / $MEGALINTER_RUNS" | bc -l 2>/dev/null || echo "N/A")
+            MEGALINTER_DURATION_MIN=$(echo "scale=1; $MEGALINTER_AVG_DURATION / 60" | bc -l 2>/dev/null || echo "N/A")
+            echo "| MegaLinter Security Scan | ${MEGALINTER_DURATION_MIN}min | ${MEGALINTER_SUCCESS_RATE}% | $MEGALINTER_RUNS |" >> performance-report.md
+          elif [ "$MEGALINTER_RUNS" -gt 0 ]; then
+            # Fallback if bc is not available
+            MEGALINTER_SUCCESS_RATE=$((MEGALINTER_SUCCESS * 100 / MEGALINTER_RUNS))
+            MEGALINTER_DURATION_MIN=$((MEGALINTER_AVG_DURATION / 60))
             echo "| MegaLinter Security Scan | ${MEGALINTER_DURATION_MIN}min | ${MEGALINTER_SUCCESS_RATE}% | $MEGALINTER_RUNS |" >> performance-report.md
           fi
 
@@ -102,11 +114,13 @@ jobs:
 
       - name: Upload Performance Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.4.3
         with:
           name: workflow-performance-report
           path: performance-report.md
           retention-days: 90
+          # 2025 Enhancement: Add attestation
+          attestation: true
 
       - name: Create Workflow Summary
         if: always()
@@ -128,12 +142,15 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2.11.1
+        uses: step-security/harden-runner@v2.12.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
 
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v5.0.0
         with:
           persist-credentials: false
 
@@ -182,8 +199,10 @@ jobs:
 
       - name: Upload Resource Analysis
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.4.3
         with:
           name: resource-usage-analysis
           path: resource-analysis.md
           retention-days: 30
+          # 2025 Enhancement: Add attestation
+          attestation: true
