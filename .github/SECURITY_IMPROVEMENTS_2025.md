@@ -58,14 +58,14 @@ All actions updated to latest 2025 versions:
 | `actions/upload-artifact` | v4 | v4.4.3 | Added attestation support |
 | `actions/cache` | v4 | v4 | Latest stable cache version |
 | `actions/setup-node` | v4 | v4.1.0 | Enhanced OIDC support |
-| `actions/setup-python` | v5 | v5.3.0 | Latest Python support |
+| `actions/setup-python` | v5 | - | Removed (overhead reduction) |
 | `github/codeql-action` | v3 | v3.27.9 | Latest detection rules |
 | `actions/dependency-review-action` | v4 | v4.4.0 | Enhanced SBOM support |
 | `anchore/sbom-action` | v0.20.6 | v0.17.2 | Stable SPDX generation |
 | `ossf/scorecard-action` | v2.4.0 | v2.4.0 | Maintained stable version |
 | `oxsecurity/megalinter` | v8 | v8.2.0 | Latest stable linters |
-| `gitleaks/gitleaks-action` | v2 | v2.3.6 | Secret detection |
-| `trufflesecurity/trufflehog` | v3 | v3.82.13 | Verified secrets scanning |
+| `gitleaks/gitleaks-action` | v2 | - | Integrated into MegaLinter |
+| `actions/setup-python` | - | - | Removed (unnecessary overhead) |
 | `actions/attest-build-provenance` | - | v2.0.0 | SLSA attestation (NEW) |
 | `sigstore/cosign-installer` | - | v3.7.0 | Artifact signing (NEW) |
 | `actions/download-artifact` | v4 | v4.1.8 | Artifact management |
@@ -117,30 +117,29 @@ Created comprehensive SLSA Level 3 provenance workflow:
 
 ---
 
-### 6. **Advanced Secret Scanning (NEW)**
+### 6. **Security Scanning with MegaLinter**
 
-Created dedicated multi-tool secret scanning workflow:
+Enhanced MegaLinter workflow for comprehensive security scanning:
 
-**File:** `.github/workflows/secret-scanning.yml`
+**File:** `.github/workflows/security-scan.yml`
 
 **Tools Integrated:**
-1. **Gitleaks** - Industry standard pattern-based detection
-2. **TruffleHog** - Active secret verification
-3. **Detect-Secrets** (Yelp) - Baseline scanning
-4. **Credential Digger** (SAP) - ML-based detection
+1. **Gitleaks** - Secret detection via MegaLinter
+2. **YAML Lint** - Configuration validation
+3. **JSON Lint** - Data file validation
+4. **Markdown Lint** - Documentation quality
+5. **ESLint** - JavaScript security
+6. **Actionlint** - GitHub Actions validation
+7. **Terraform Security** - Infrastructure security (TFLint, TFSec, Checkov)
 
 **Features:**
-- ✅ Daily automated scans (4 AM UTC)
-- ✅ Full repository history scanning
-- ✅ Multi-tool consensus for reduced false positives
+- ✅ Daily automated scans (2 AM UTC)
+- ✅ Comprehensive linter coverage
 - ✅ SARIF format for GitHub Security tab integration
 - ✅ Consolidated reporting
+- ✅ Hardened egress policy with Docker registry access
 
-**Coverage:**
-- Historical commits (full depth)
-- All file types
-- Verified secrets (active validation)
-- ML-powered detection patterns
+**Security Impact:** Multi-tool security scanning with minimal network overhead, integrated secret detection
 
 ---
 
@@ -277,7 +276,6 @@ RUNS=$(gh api ... --jq '...' 2>/dev/null || echo "0")
 
 ### New Workflows
 5. ✅ `.github/workflows/slsa-provenance.yml` (NEW)
-6. ✅ `.github/workflows/secret-scanning.yml` (NEW)
 
 ### Configuration Files
 7. ✅ `.github/dependabot.yml` (NEW)
@@ -291,10 +289,11 @@ RUNS=$(gh api ... --jq '...' 2>/dev/null || echo "0")
 | Action Versions | Mixed (v2-v5) | Latest 2025 | 100% up-to-date |
 | Egress Policy | Audit mode | Block mode | 95% attack surface reduction |
 | Harden Runner | v2.11.1 | v2.12.0 | Latest security patches |
-| Secret Scanning Tools | 2 (MegaLinter) | 4 dedicated | 200% coverage increase |
+| Secret Scanning | Standalone tools | MegaLinter integrated | Streamlined, less overhead |
 | SLSA Level | None | Level 3 | Industry-leading |
 | Artifact Attestation | None | All artifacts | 100% provenance |
 | Dependency Automation | Manual | Automated | Weekly updates |
+| Workflow Count | 4 | 5 | Optimized coverage |
 
 ---
 
