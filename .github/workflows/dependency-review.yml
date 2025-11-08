@@ -56,7 +56,7 @@ jobs:
           persist-credentials: false
 
       - name: Dependency Review
-        uses: actions/dependency-review-action@v4.4.0
+        uses: actions/dependency-review-action@v4.8.1
         with:
           fail-on-severity: moderate
           fail-on-scopes: runtime
@@ -98,7 +98,7 @@ jobs:
       # Node.js dependency scanning
       - name: Setup Node.js
         if: hashFiles('package.json') != ''
-        uses: actions/setup-node@v4.1.0
+        uses: actions/setup-node@v6.0.0
         with:
           node-version: 'lts/*'
           cache: 'npm'
@@ -115,7 +115,7 @@ jobs:
 
       - name: Upload npm audit results
         if: hashFiles('package.json') != '' && always()
-        uses: actions/upload-artifact@v4.4.3
+        uses: actions/upload-artifact@v5.0.0
         with:
           name: npm-audit-results
           path: npm-audit-results.json
@@ -137,7 +137,7 @@ jobs:
 
       - name: Upload SBOM
         if: always()
-        uses: actions/upload-artifact@v4.4.3
+        uses: actions/upload-artifact@v5.0.0
         with:
           name: sbom-report
           path: sbom.spdx.json
@@ -202,14 +202,14 @@ jobs:
             Vulnerabilities
 
       - name: Upload OSSF Scorecard results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3.27.9
+        uses: github/codeql-action/upload-sarif@v4.31.2
         with:
           sarif_file: results.sarif
           category: ossf-scorecard
 
       - name: Upload OSSF Scorecard results as artifact
         if: always()
-        uses: actions/upload-artifact@v4.4.3
+        uses: actions/upload-artifact@v5.0.0
         with:
           name: scorecard-results
           path: results.sarif
