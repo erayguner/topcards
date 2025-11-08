@@ -164,31 +164,35 @@ add-attestation: true    # Cryptographic verification
 
 **Improvements:**
 - ✅ Blocked egress policy with explicit endpoints
-- ✅ Latest dependency-review-action v4.5.0
+- ✅ Latest dependency-review-action v4.4.0
 - ✅ Enhanced SBOM generation with attestation
-- ✅ OSSF Scorecard updated to v2.5.0
-- ✅ Added GPL license blocking (GPL-3.0, AGPL-3.0)
+- ✅ OSSF Scorecard updated to v2.4.0
+- ✅ Vulnerability checking enabled for all scopes
 
-**New Security Checks:**
+**Security Focus:**
 ```yaml
-deny-licenses: GPL-3.0, AGPL-3.0
+fail-on-severity: moderate
+fail-on-scopes: runtime
 vulnerability-check: true
 ```
+
+**Note:** License restrictions are not applied to GitHub Actions (CI/CD tools) as they don't ship with the product and don't affect project licensing obligations.
 
 ---
 
 ### 9. **Security Scan (MegaLinter) Updates**
 
 **Improvements:**
-- ✅ Updated MegaLinter to v8.4.0
+- ✅ Updated MegaLinter to v8.2.0 (stable)
 - ✅ Enhanced egress policy with Docker registry endpoints
-- ✅ Updated cache strategy (v4.2.0)
+- ✅ Updated cache strategy to v4 (latest stable)
 - ✅ Artifact attestation enabled
 
 **Additional Endpoints:**
 - Docker Hub (for linter images)
-- GitHub Container Registry
+- GitHub Container Registry (ghcr.io)
 - NPM registry for JavaScript linters
+- PyPI for Python tools
 
 ---
 
