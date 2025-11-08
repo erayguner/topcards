@@ -56,12 +56,12 @@ All actions updated to latest 2025 versions:
 |--------|----------|---------|----------------|
 | `actions/checkout` | v4 | v5.0.0 | Latest v5 release with enhanced security |
 | `actions/upload-artifact` | v4 | v4.4.3 | Added attestation support |
-| `actions/cache` | v4 | v4.1.2 | Improved cache security |
+| `actions/cache` | v4 | v4 | Latest stable cache version |
 | `actions/setup-node` | v4 | v4.1.0 | Enhanced OIDC support |
 | `actions/setup-python` | v5 | v5.3.0 | Latest Python support |
 | `github/codeql-action` | v3 | v3.27.9 | Latest detection rules |
 | `actions/dependency-review-action` | v4 | v4.4.0 | Enhanced SBOM support |
-| `anchore/sbom-action` | v0.20.6 | v0.17.7 | Stable SPDX generation |
+| `anchore/sbom-action` | v0.20.6 | v0.18.2 | Stable SPDX generation |
 | `ossf/scorecard-action` | v2.4.0 | v2.4.0 | Maintained stable version |
 | `oxsecurity/megalinter` | v8 | v8.2.0 | Latest stable linters |
 | `gitleaks/gitleaks-action` | v2 | v2.3.6 | Secret detection |

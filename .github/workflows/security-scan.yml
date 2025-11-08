@@ -76,7 +76,7 @@ jobs:
 
       # Cache MegaLinter dependencies for faster runs
       - name: Cache MegaLinter
-        uses: actions/cache@v4.1.2
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cache/megalinter
