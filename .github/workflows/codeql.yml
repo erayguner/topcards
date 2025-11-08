@@ -17,7 +17,7 @@ permissions:
 
 env:
   # Environment variables for consistency
-  CODEQL_LANGUAGES: 'javascript'
+  CODEQL_LANGUAGES: 'javascript,python'
   CODEQL_QUERIES: 'security-extended,security-and-quality'
 
 jobs:
@@ -36,9 +36,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ['javascript']
+        language: ['javascript', 'python']
         include:
           - language: javascript
+            build-mode: none
+          - language: python
             build-mode: none
 
     steps:
