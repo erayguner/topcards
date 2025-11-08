@@ -2,9 +2,8 @@
 name: Performance Monitoring & Optimization
 
 on:
-  workflow_run:
-    workflows: ["CodeQL Security Analysis", "MegaLinter Security & Quality Scan"]
-    types: [completed]
+  # Removed workflow_run trigger to avoid dangerous workflow pattern
+  # workflow_run has write permissions and can be exploited
   schedule:
     # Run weekly performance analysis on Fridays at 8 AM UTC
     - cron: '0 8 * * 5'
@@ -42,6 +41,8 @@ jobs:
         id: performance
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Store untrusted context variables in environment variables to prevent script injection
+          REPOSITORY: ${{ github.repository }}
         run: |
           # Get workflow runs from the last 30 days
           echo "## 📊 Workflow Performance Report" >> performance-report.md
@@ -50,11 +51,12 @@ jobs:
           echo "|----------|--------------|--------------|------------------|" >> performance-report.md
 
           # Analyze CodeQL workflow with error handling
-          CODEQL_RUNS=$(gh api repos/${{ github.repository }}/actions/workflows/codeql.yml/runs \
+          # Use environment variable instead of direct context interpolation to prevent injection
+          CODEQL_RUNS=$(gh api "repos/${REPOSITORY}/actions/workflows/codeql.yml/runs" \
             --jq '.workflow_runs[0:10] | map(select(.created_at > (now - 30*24*3600 | todate))) | length' 2>/dev/null || echo "0")
-          CODEQL_SUCCESS=$(gh api repos/${{ github.repository }}/actions/workflows/codeql.yml/runs \
+          CODEQL_SUCCESS=$(gh api "repos/${REPOSITORY}/actions/workflows/codeql.yml/runs" \
             --jq '.workflow_runs[0:10] | map(select(.created_at > (now - 30*24*3600 | todate) and .conclusion == "success")) | length' 2>/dev/null || echo "0")
-          CODEQL_AVG_DURATION=$(gh api repos/${{ github.repository }}/actions/workflows/codeql.yml/runs \
+          CODEQL_AVG_DURATION=$(gh api "repos/${REPOSITORY}/actions/workflows/codeql.yml/runs" \
             --jq '.workflow_runs[0:5] | map(select(.conclusion == "success")) | map((.updated_at | fromdateiso8601) - (.created_at | fromdateiso8601)) | add / length | floor' 2>/dev/null || echo "0")
 
           if [ "$CODEQL_RUNS" -gt 0 ] && command -v bc >/dev/null 2>&1; then
@@ -69,11 +71,12 @@ jobs:
           fi
 
           # Analyze MegaLinter workflow with error handling
-          MEGALINTER_RUNS=$(gh api repos/${{ github.repository }}/actions/workflows/security-scan.yml/runs \
+          # Use environment variable instead of direct context interpolation to prevent injection
+          MEGALINTER_RUNS=$(gh api "repos/${REPOSITORY}/actions/workflows/security-scan.yml/runs" \
             --jq '.workflow_runs[0:10] | map(select(.created_at > (now - 30*24*3600 | todate))) | length' 2>/dev/null || echo "0")
-          MEGALINTER_SUCCESS=$(gh api repos/${{ github.repository }}/actions/workflows/security-scan.yml/runs \
+          MEGALINTER_SUCCESS=$(gh api "repos/${REPOSITORY}/actions/workflows/security-scan.yml/runs" \
             --jq '.workflow_runs[0:10] | map(select(.created_at > (now - 30*24*3600 | todate) and .conclusion == "success")) | length' 2>/dev/null || echo "0")
-          MEGALINTER_AVG_DURATION=$(gh api repos/${{ github.repository }}/actions/workflows/security-scan.yml/runs \
+          MEGALINTER_AVG_DURATION=$(gh api "repos/${REPOSITORY}/actions/workflows/security-scan.yml/runs" \
             --jq '.workflow_runs[0:5] | map(select(.conclusion == "success")) | map((.updated_at | fromdateiso8601) - (.created_at | fromdateiso8601)) | add / length | floor' 2>/dev/null || echo "0")
 
           if [ "$MEGALINTER_RUNS" -gt 0 ] && command -v bc >/dev/null 2>&1; then

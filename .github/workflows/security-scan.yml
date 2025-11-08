@@ -119,14 +119,19 @@ jobs:
       # Generate workflow summary
       - name: Generate Workflow Summary
         if: always()
+        env:
+          # Store untrusted context variables to prevent script injection
+          RUNNER_OS: ${{ runner.os }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           echo "## 🛡️ MegaLinter Security Scan Results" >> $GITHUB_STEP_SUMMARY
           echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| Flavor Used | \`${{ env.MEGALINTER_FLAVOR }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Runner OS | \`${{ runner.os }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Triggered By | \`${{ github.actor }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Event | \`${{ github.event_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Runner OS | \`${RUNNER_OS}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered By | \`${GITHUB_ACTOR}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Event | \`${EVENT_NAME}\` |" >> $GITHUB_STEP_SUMMARY
 
           if [ -f "megalinter-reports/megalinter.log" ]; then
             echo "| Log File | ✅ Generated |" >> $GITHUB_STEP_SUMMARY
