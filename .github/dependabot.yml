@@ -1,0 +1,93 @@
+---
+# Dependabot configuration for automated dependency and GitHub Actions updates
+# 2025 Security Best Practice: Automated dependency management reduces supply chain risk
+
+version: 2
+
+updates:
+  # GitHub Actions - Critical for supply chain security
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "erayguner"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "security"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    # Group related action updates together
+    groups:
+      github-actions:
+        patterns:
+          - "actions/*"
+          - "github/*"
+      security-actions:
+        patterns:
+          - "step-security/*"
+          - "ossf/*"
+          - "anchore/*"
+      linting-actions:
+        patterns:
+          - "oxsecurity/*"
+
+  # npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "erayguner"
+    labels:
+      - "dependencies"
+      - "npm"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    # Automatically update patch and minor versions
+    groups:
+      development-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+      production-dependencies:
+        dependency-type: "production"
+        update-types:
+          - "patch"
+    # Security-only updates for production dependencies
+    versioning-strategy: increase
+    ignore:
+      # Ignore major version updates for production (review manually)
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Terraform dependencies (if applicable)
+  - package-ecosystem: "terraform"
+    directory: "/terraform"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "erayguner"
+    labels:
+      - "dependencies"
+      - "terraform"
+      - "infrastructure"
+    commit-message:
+      prefix: "chore(infra)"
+      include: "scope"

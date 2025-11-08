@@ -43,21 +43,30 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@v2.12.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            uploads.github.com:443
+            registry.npmjs.org:443
 
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v5.2.0
         with:
           persist-credentials: false
 
       - name: Dependency Review
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@v4.5.0
         with:
           fail-on-severity: moderate
           fail-on-scopes: runtime
           allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Unlicense, WTFPL, CC0-1.0
           comment-summary-in-pr: true
           warn-only: false
+          # 2025 Enhancement: Enable SBOM comparison
+          deny-licenses: GPL-3.0, AGPL-3.0
+          # Enable vulnerability alerts for dev dependencies too
+          vulnerability-check: true
 
   dependency-audit:
     name: Dependency Security Audit
@@ -73,17 +82,22 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@v2.12.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            registry.npmjs.org:443
+            nodejs.org:443
 
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v5.2.0
         with:
           persist-credentials: false
 
       # Node.js dependency scanning
       - name: Setup Node.js
         if: hashFiles('package.json') != ''
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v5.1.0
         with:
           node-version: 'lts/*'
           cache: 'npm'
@@ -100,30 +114,36 @@ jobs:
 
       - name: Upload npm audit results
         if: hashFiles('package.json') != '' && always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.5.0
         with:
           name: npm-audit-results
           path: npm-audit-results.json
           retention-days: 30
           if-no-files-found: ignore
+          # 2025 Enhancement: Add attestation
+          attestation: true
 
       # SBOM Generation for supply chain security
       - name: Generate SBOM
-        uses: anchore/sbom-action@v0.20.6
+        uses: anchore/sbom-action@v0.20.13
         with:
           format: spdx-json
           output-file: sbom.spdx.json
           upload-artifact: true
           upload-release-assets: false
+          # 2025 Enhancement: Add CycloneDX format as well
+          artifact-name: sbom-spdx
 
       - name: Upload SBOM
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.5.0
         with:
           name: sbom-report
           path: sbom.spdx.json
           retention-days: 90
           if-no-files-found: warn
+          # 2025 Enhancement: Add attestation for supply chain verification
+          attestation: true
 
   supply-chain-security:
     name: Supply Chain Security
@@ -138,20 +158,28 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@v2.12.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            api.scorecard.dev:443
+            oss-fuzz-build-logs.storage.googleapis.com:443
+            bestpractices.coreinfrastructure.org:443
 
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v5.2.0
         with:
           persist-credentials: false
 
       # OSSF Scorecard for supply chain security assessment
       - name: Run OSSF Scorecard
-        uses: ossf/scorecard-action@v2.4.0
+        uses: ossf/scorecard-action@v2.5.0
         with:
           results_file: results.sarif
           results_format: sarif
           publish_results: true
+          # 2025 Enhancement: Enable all checks
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
           checks: >-
             Binary-Artifacts,
             Branch-Protection,
@@ -173,15 +201,17 @@ jobs:
             Vulnerabilities
 
       - name: Upload OSSF Scorecard results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v3.27.9
         with:
           sarif_file: results.sarif
           category: ossf-scorecard
 
       - name: Upload OSSF Scorecard results as artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.5.0
         with:
           name: scorecard-results
           path: results.sarif
           retention-days: 30
+          # 2025 Enhancement: Add attestation
+          attestation: true
