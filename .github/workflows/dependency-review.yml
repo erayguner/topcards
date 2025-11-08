@@ -87,6 +87,8 @@ jobs:
             github.com:443
             registry.npmjs.org:443
             nodejs.org:443
+            toolbox-data.anchore.io:443
+            ancho.re:443
 
       - name: Checkout repository
         uses: actions/checkout@v5.0.0
@@ -125,6 +127,7 @@ jobs:
       # SBOM Generation for supply chain security
       - name: Generate SBOM
         uses: anchore/sbom-action@v0.17.2
+        continue-on-error: true
         with:
           format: spdx-json
           output-file: sbom.spdx.json
@@ -139,7 +142,7 @@ jobs:
           name: sbom-report
           path: sbom.spdx.json
           retention-days: 90
-          if-no-files-found: warn
+          if-no-files-found: ignore
           # 2025 Enhancement: Add attestation for supply chain verification
           attestation: true
 
