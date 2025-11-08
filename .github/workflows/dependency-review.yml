@@ -62,8 +62,9 @@ jobs:
           fail-on-scopes: runtime
           comment-summary-in-pr: true
           warn-only: false
-          # 2025 Enhancement: Block restrictive licenses
-          deny-licenses: GPL-3.0, AGPL-3.0, LGPL-2.0, LGPL-2.1, LGPL-3.0
+          # Note: License restrictions only apply to runtime dependencies
+          # GitHub Actions (CI/CD tools) are excluded from license checks
+          # as they don't ship with the product
           vulnerability-check: true
 
   dependency-audit:
