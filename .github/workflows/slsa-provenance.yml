@@ -50,7 +50,7 @@ jobs:
             tuf-repo-cdn.sigstore.dev:443
 
       - name: Checkout repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5.0.0
         with:
           persist-credentials: false
           fetch-depth: 0

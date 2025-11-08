@@ -51,7 +51,7 @@ jobs:
             registry.npmjs.org:443
 
       - name: Checkout repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5.0.0
         with:
           persist-credentials: false
 
@@ -90,7 +90,7 @@ jobs:
             nodejs.org:443
 
       - name: Checkout repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5.0.0
         with:
           persist-credentials: false
 
@@ -167,7 +167,7 @@ jobs:
             bestpractices.coreinfrastructure.org:443
 
       - name: Checkout repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5.0.0
         with:
           persist-credentials: false
 

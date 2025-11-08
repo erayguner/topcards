@@ -54,7 +54,7 @@ All actions updated to latest 2025 versions:
 
 | Action | Previous | Updated | Security Impact |
 |--------|----------|---------|----------------|
-| `actions/checkout` | v4 | v4.2.2 | Latest stable security patches |
+| `actions/checkout` | v4 | v5.0.0 | Latest v5 release with enhanced security |
 | `actions/upload-artifact` | v4 | v4.4.3 | Added attestation support |
 | `actions/cache` | v4 | v4.1.2 | Improved cache security |
 | `actions/setup-node` | v4 | v4.1.0 | Enhanced OIDC support |
