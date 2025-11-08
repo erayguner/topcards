@@ -123,7 +123,7 @@ jobs:
 
       # SBOM Generation for supply chain security
       - name: Generate SBOM
-        uses: anchore/sbom-action@v0.18.2
+        uses: anchore/sbom-action@v0.17.2
         with:
           format: spdx-json
           output-file: sbom.spdx.json

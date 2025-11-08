@@ -61,7 +61,7 @@ All actions updated to latest 2025 versions:
 | `actions/setup-python` | v5 | v5.3.0 | Latest Python support |
 | `github/codeql-action` | v3 | v3.27.9 | Latest detection rules |
 | `actions/dependency-review-action` | v4 | v4.4.0 | Enhanced SBOM support |
-| `anchore/sbom-action` | v0.20.6 | v0.18.2 | Stable SPDX generation |
+| `anchore/sbom-action` | v0.20.6 | v0.17.2 | Stable SPDX generation |
 | `ossf/scorecard-action` | v2.4.0 | v2.4.0 | Maintained stable version |
 | `oxsecurity/megalinter` | v8 | v8.2.0 | Latest stable linters |
 | `gitleaks/gitleaks-action` | v2 | v2.3.6 | Secret detection |
