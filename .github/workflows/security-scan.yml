@@ -86,7 +86,7 @@ jobs:
             megalinter-${{ runner.os }}-
 
       - name: Run MegaLinter
-        uses: oxsecurity/megalinter@v8.2.0
+        uses: oxsecurity/megalinter@v9.1.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MEGALINTER_CONFIG: ${{ env.MEGALINTER_CONFIG }}
