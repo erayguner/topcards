@@ -1,0 +1,326 @@
+---
+name: Security Policy Enforcement
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run weekly on Mondays at 9:00 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+# Global permissions (minimal)
+permissions:
+  contents: read
+
+env:
+  REQUIRED_SECURITY_FILES: 'SECURITY.md .github/workflows/security-scan.yml .github/workflows/codeql.yml'
+  SECURITY_MD_MAX_AGE_DAYS: 180  # 6 months
+
+jobs:
+  validate-security-policy:
+    name: Validate Security Policy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    # Job-specific permissions (principle of least privilege)
+    permissions:
+      contents: read
+      security-events: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2.13.2
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+
+      - name: Checkout repository
+        uses: actions/checkout@v5.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check SECURITY.md exists
+        id: check-security-md
+        run: |
+          if [ ! -f "SECURITY.md" ]; then
+            echo "::error file=SECURITY.md::SECURITY.md file is missing"
+            echo "has_security_md=false" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "✅ SECURITY.md found" >> $GITHUB_STEP_SUMMARY
+            echo "has_security_md=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate SECURITY.md age
+        if: steps.check-security-md.outputs.has_security_md == 'true'
+        run: |
+          # Get last modification date of SECURITY.md
+          LAST_MODIFIED=$(git log -1 --format=%ct SECURITY.md 2>/dev/null || echo "0")
+          CURRENT_TIME=$(date +%s)
+          AGE_DAYS=$(( (CURRENT_TIME - LAST_MODIFIED) / 86400 ))
+
+          echo "## 📅 SECURITY.md Age Check" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Last Modified | ${AGE_DAYS} days ago |" >> $GITHUB_STEP_SUMMARY
+          echo "| Max Allowed Age | ${{ env.SECURITY_MD_MAX_AGE_DAYS }} days |" >> $GITHUB_STEP_SUMMARY
+
+          if [ $AGE_DAYS -gt ${{ env.SECURITY_MD_MAX_AGE_DAYS }} ]; then
+            echo "| Status | ⚠️ Outdated |" >> $GITHUB_STEP_SUMMARY
+            echo "::warning file=SECURITY.md::SECURITY.md is ${AGE_DAYS} days old, consider reviewing and updating"
+          else
+            echo "| Status | ✅ Current |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Validate required security sections
+        run: |
+          echo "## 📋 Security Policy Sections" >> $GITHUB_STEP_SUMMARY
+          echo "| Section | Present |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|---------|" >> $GITHUB_STEP_SUMMARY
+
+          SECTIONS=("Supported Versions" "Reporting a Vulnerability" "Security Best Practices" "Compliance" "Security Tools and Scanning")
+          EXIT_CODE=0
+
+          for section in "${SECTIONS[@]}"; do
+            if grep -q "## ${section}" SECURITY.md; then
+              echo "| ${section} | ✅ |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| ${section} | ❌ |" >> $GITHUB_STEP_SUMMARY
+              echo "::error file=SECURITY.md::Required section '${section}' is missing"
+              EXIT_CODE=1
+            fi
+          done
+
+          exit $EXIT_CODE
+
+      - name: Validate security workflow files
+        run: |
+          echo "## 🔧 Security Workflow Files" >> $GITHUB_STEP_SUMMARY
+          echo "| Workflow | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+
+          WORKFLOWS=("security-scan.yml" "codeql.yml" "dependency-review.yml")
+          EXIT_CODE=0
+
+          for workflow in "${WORKFLOWS[@]}"; do
+            if [ -f ".github/workflows/${workflow}" ]; then
+              echo "| ${workflow} | ✅ Present |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| ${workflow} | ❌ Missing |" >> $GITHUB_STEP_SUMMARY
+              echo "::error file=.github/workflows/${workflow}::Required security workflow '${workflow}' is missing"
+              EXIT_CODE=1
+            fi
+          done
+
+          exit $EXIT_CODE
+
+      - name: Check for security contact
+        run: |
+          echo "## 👤 Security Contact Information" >> $GITHUB_STEP_SUMMARY
+
+          # Check for security contact in SECURITY.md
+          if grep -qE "(email|contact|@)" SECURITY.md; then
+            echo "✅ Security contact information found in SECURITY.md" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No security contact information found in SECURITY.md" >> $GITHUB_STEP_SUMMARY
+            echo "::warning file=SECURITY.md::Consider adding security contact information"
+          fi
+
+          # Check for GitHub security advisories configuration
+          if [ -f ".github/SECURITY.md" ]; then
+            echo "✅ GitHub security advisories configured" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Validate security scanning tools
+        run: |
+          echo "## 🛠️ Security Scanning Tools" >> $GITHUB_STEP_SUMMARY
+          echo "| Tool | Configured |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------------|" >> $GITHUB_STEP_SUMMARY
+
+          # Check if tools mentioned in SECURITY.md are actually configured
+          TOOLS=("TruffleHog" "Gitleaks" "Semgrep" "Checkov" "TFSec" "Terrascan" "OWASP")
+
+          for tool in "${TOOLS[@]}"; do
+            # Search for tool references in workflow files
+            if grep -riq "${tool}" .github/workflows/; then
+              echo "| ${tool} | ✅ |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| ${tool} | ⚠️ Not found in workflows |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+      - name: Check branch protection requirements
+        run: |
+          echo "## 🔒 Branch Protection" >> $GITHUB_STEP_SUMMARY
+
+          # Note: This requires GitHub API access for full validation
+          # For now, we'll document the requirement
+          echo "Branch protection should include:" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Require pull request reviews" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Require status checks to pass" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Require signed commits" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Include administrators" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "ℹ️ Manual verification required via repository settings" >> $GITHUB_STEP_SUMMARY
+
+      - name: Validate compliance standards
+        run: |
+          echo "## 📜 Compliance Standards" >> $GITHUB_STEP_SUMMARY
+          echo "| Standard | Documented |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|------------|" >> $GITHUB_STEP_SUMMARY
+
+          STANDARDS=("OWASP" "CIS" "SOC 2")
+
+          for standard in "${STANDARDS[@]}"; do
+            if grep -qi "${standard}" SECURITY.md; then
+              echo "| ${standard} | ✅ |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| ${standard} | ❌ |" >> $GITHUB_STEP_SUMMARY
+              echo "::warning file=SECURITY.md::Compliance standard '${standard}' not documented"
+            fi
+          done
+
+      - name: Check for vulnerability disclosure process
+        run: |
+          echo "## 🚨 Vulnerability Disclosure" >> $GITHUB_STEP_SUMMARY
+
+          REQUIRED_ELEMENTS=("Reporting" "Response Process" "Timeline")
+          EXIT_CODE=0
+
+          for element in "${REQUIRED_ELEMENTS[@]}"; do
+            if grep -qi "${element}" SECURITY.md; then
+              echo "✅ ${element} process documented" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ ${element} process not found" >> $GITHUB_STEP_SUMMARY
+              echo "::error file=SECURITY.md::Vulnerability disclosure process incomplete - missing '${element}'"
+              EXIT_CODE=1
+            fi
+          done
+
+          exit $EXIT_CODE
+
+      - name: Security Policy Summary
+        if: always()
+        run: |
+          echo "## 📊 Security Policy Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Security policy validation completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review any warnings or errors above" >> $GITHUB_STEP_SUMMARY
+          echo "2. Update SECURITY.md if outdated" >> $GITHUB_STEP_SUMMARY
+          echo "3. Ensure all documented security tools are configured" >> $GITHUB_STEP_SUMMARY
+          echo "4. Verify branch protection rules are enabled" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📅 **Run Date**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+
+  check-secret-scanning:
+    name: Verify Secret Scanning
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+      security-events: read
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2.13.2
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+
+      - name: Checkout repository
+        uses: actions/checkout@v5.0.0
+        with:
+          persist-credentials: false
+
+      - name: Verify secret scanning configuration
+        run: |
+          echo "## 🔍 Secret Scanning Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Verifying secret scanning tools are configured..." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check for secret scanning in workflows
+          if grep -riq "truffleHog\|gitleaks\|secret" .github/workflows/; then
+            echo "✅ Secret scanning workflows detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No secret scanning workflows found" >> $GITHUB_STEP_SUMMARY
+            echo "::warning::Consider adding secret scanning to CI/CD pipeline"
+          fi
+
+          # Check for pre-commit configuration
+          if [ -f ".pre-commit-config.yaml" ]; then
+            echo "✅ Pre-commit configuration found" >> $GITHUB_STEP_SUMMARY
+
+            if grep -q "gitleaks\|detect-secrets\|trufflehog" .pre-commit-config.yaml; then
+              echo "✅ Secret scanning in pre-commit hooks" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️ No secret scanning in pre-commit hooks" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "ℹ️ No pre-commit configuration found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  dependency-security:
+    name: Dependency Security Check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2.13.2
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            registry.npmjs.org:443
+
+      - name: Checkout repository
+        uses: actions/checkout@v5.0.0
+        with:
+          persist-credentials: false
+
+      - name: Check for dependency scanning
+        run: |
+          echo "## 📦 Dependency Security" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check for dependency review workflow
+          if [ -f ".github/workflows/dependency-review.yml" ]; then
+            echo "✅ Dependency review workflow configured" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No dependency review workflow found" >> $GITHUB_STEP_SUMMARY
+            echo "::warning::Consider adding dependency review workflow"
+          fi
+
+          # Check for Dependabot configuration
+          if [ -f ".github/dependabot.yml" ]; then
+            echo "✅ Dependabot configured" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Dependabot not configured" >> $GITHUB_STEP_SUMMARY
+            echo "::warning file=.github/dependabot.yml::Consider enabling Dependabot"
+          fi
+
+          # Check for package-lock.json or similar
+          if [ -f "package-lock.json" ] || [ -f "yarn.lock" ] || [ -f "pnpm-lock.yaml" ]; then
+            echo "✅ Lock file present for dependency pinning" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No lock file found" >> $GITHUB_STEP_SUMMARY
+          fi
