@@ -41,7 +41,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2.12.0
+        uses: step-security/harden-runner@v2.13.2
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -79,7 +79,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2.12.0
+        uses: step-security/harden-runner@v2.13.2
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -126,7 +126,7 @@ jobs:
 
       # SBOM Generation for supply chain security
       - name: Generate SBOM
-        uses: anchore/sbom-action@v0.17.2
+        uses: anchore/sbom-action@v0.20.9
         continue-on-error: true
         with:
           format: spdx-json
@@ -157,7 +157,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2.12.0
+        uses: step-security/harden-runner@v2.13.2
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -174,7 +174,7 @@ jobs:
 
       # OSSF Scorecard for supply chain security assessment
       - name: Run OSSF Scorecard
-        uses: ossf/scorecard-action@v2.4.0
+        uses: ossf/scorecard-action@v2.4.3
         with:
           results_file: results.sarif
           results_format: sarif
