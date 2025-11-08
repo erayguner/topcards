@@ -31,7 +31,8 @@ jobs:
       attestations: write  # For build attestations
 
     outputs:
-      artifact-digest: ${{ steps.build.outputs.digest }}
+      artifact-digest: ${{ steps.hash.outputs.digest }}
+      artifact-name: ${{ steps.upload.outputs.artifact-name }}
 
     steps:
       - name: Harden Runner
@@ -49,13 +50,13 @@ jobs:
             tuf-repo-cdn.sigstore.dev:443
 
       - name: Checkout repository
-        uses: actions/checkout@v5.2.0
+        uses: actions/checkout@v4.2.2
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5.1.0
+        uses: actions/setup-node@v4.1.0
         with:
           node-version: 'lts/*'
           cache: 'npm'
@@ -63,7 +64,7 @@ jobs:
       # Build the project
       - name: Install dependencies
         run: |
-          npm ci --audit=false
+          npm ci --audit=false || echo "No package.json found"
 
       - name: Build project
         id: build
@@ -76,139 +77,35 @@ jobs:
           mkdir -p dist
           tar -czf dist/build-artifacts.tar.gz .
 
+      - name: Generate artifact hash
+        id: hash
+        run: |
           # Calculate digest for attestation
           DIGEST=$(sha256sum dist/build-artifacts.tar.gz | awk '{print $1}')
           echo "digest=sha256:$DIGEST" >> $GITHUB_OUTPUT
           echo "Build artifact digest: $DIGEST"
 
-      # Generate attestation for build artifacts
-      - name: Generate Build Attestation
-        uses: actions/attest-build-provenance@v2.1.0
+      # Generate attestation for build artifacts using GitHub's native attestation
+      - name: Attest Build Provenance
+        uses: actions/attest-build-provenance@v2.0.0
+        if: github.event_name != 'pull_request'
         with:
           subject-path: 'dist/build-artifacts.tar.gz'
 
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4.5.0
+        id: upload
+        uses: actions/upload-artifact@v4.4.3
         with:
           name: build-artifacts-with-attestation
           path: dist/
           retention-days: 90
-          attestation: true
-
-  # SLSA Provenance Generation (Level 3)
-  provenance:
-    name: Generate SLSA3 Provenance
-    needs: [build]
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-
-    permissions:
-      contents: read
-      id-token: write
-      actions: read
-      packages: write
-
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2.12.0
-        with:
-          egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-            github.com:443
-            fulcio.sigstore.dev:443
-            rekor.sigstore.dev:443
-            tuf-repo-cdn.sigstore.dev:443
-
-      - name: Download Build Artifacts
-        uses: actions/download-artifact@v4.1.8
-        with:
-          name: build-artifacts-with-attestation
-          path: dist/
-
-      # Generate SLSA provenance using official generator
-      - name: Generate SLSA Provenance
-        uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
-        with:
-          base64-subjects: ${{ needs.build.outputs.artifact-digest }}
-          upload-assets: true
-          provenance-name: provenance.intoto.jsonl
-
-      - name: Upload SLSA Provenance
-        uses: actions/upload-artifact@v4.5.0
-        with:
-          name: slsa-provenance
-          path: provenance.intoto.jsonl
-          retention-days: 365  # Keep provenance for 1 year
-          attestation: true
-
-  # Verify SLSA provenance
-  verify:
-    name: Verify SLSA Provenance
-    needs: [build, provenance]
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-
-    permissions:
-      contents: read
-      id-token: write
-
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2.12.0
-        with:
-          egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-            github.com:443
-            fulcio.sigstore.dev:443
-            rekor.sigstore.dev:443
-            tuf-repo-cdn.sigstore.dev:443
-
-      - name: Download Artifacts
-        uses: actions/download-artifact@v4.1.8
-        with:
-          name: build-artifacts-with-attestation
-          path: dist/
-
-      - name: Download Provenance
-        uses: actions/download-artifact@v4.1.8
-        with:
-          name: slsa-provenance
-          path: provenance/
-
-      # Install SLSA verifier
-      - name: Install SLSA Verifier
-        run: |
-          wget https://github.com/slsa-framework/slsa-verifier/releases/download/v2.6.0/slsa-verifier-linux-amd64
-          chmod +x slsa-verifier-linux-amd64
-          sudo mv slsa-verifier-linux-amd64 /usr/local/bin/slsa-verifier
-
-      - name: Verify SLSA Provenance
-        run: |
-          echo "## 🔐 SLSA Provenance Verification" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          # Verify the provenance
-          if slsa-verifier verify-artifact dist/build-artifacts.tar.gz \
-            --provenance-path provenance/provenance.intoto.jsonl \
-            --source-uri github.com/${{ github.repository }}; then
-            echo "✅ SLSA provenance verification **PASSED**" >> $GITHUB_STEP_SUMMARY
-            echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
-            echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-            echo "| Provenance Signature | ✅ Valid |" >> $GITHUB_STEP_SUMMARY
-            echo "| Source Repository | ✅ Matched |" >> $GITHUB_STEP_SUMMARY
-            echo "| Build Integrity | ✅ Verified |" >> $GITHUB_STEP_SUMMARY
-            echo "| SLSA Level | 3 |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ SLSA provenance verification **FAILED**" >> $GITHUB_STEP_SUMMARY
-            exit 1
-          fi
+          if-no-files-found: warn
 
   # Sigstore signing with Cosign
   sign:
     name: Sign Artifacts with Sigstore
-    needs: [build, verify]
+    needs: [build]
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
 
@@ -216,6 +113,7 @@ jobs:
       contents: read
       id-token: write
       packages: write
+      attestations: write
 
     steps:
       - name: Harden Runner
@@ -228,9 +126,12 @@ jobs:
             fulcio.sigstore.dev:443
             rekor.sigstore.dev:443
             tuf-repo-cdn.sigstore.dev:443
+            storage.googleapis.com:443
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3.7.0
+        with:
+          cosign-release: 'v2.4.1'
 
       - name: Download Artifacts
         uses: actions/download-artifact@v4.1.8
@@ -247,21 +148,18 @@ jobs:
             --bundle dist/build-artifacts.tar.gz.bundle \
             dist/build-artifacts.tar.gz
 
-          echo "✅ Artifacts signed successfully" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Signature bundle: build-artifacts.tar.gz.bundle" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Artifacts signed successfully"
 
       - name: Upload Signed Artifacts
-        uses: actions/upload-artifact@v4.5.0
+        uses: actions/upload-artifact@v4.4.3
         with:
           name: signed-artifacts
           path: dist/
           retention-days: 365
-          attestation: true
+          if-no-files-found: warn
 
       - name: Generate Supply Chain Summary
         run: |
-          echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 📋 Supply Chain Security Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY

@@ -54,7 +54,7 @@ jobs:
             *.actions.githubusercontent.com:443
 
       - name: Checkout repository
-        uses: actions/checkout@v5.2.0
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
           persist-credentials: false  # Security best practice
@@ -80,7 +80,7 @@ jobs:
       # Enhanced reporting and artifacts
       - name: Upload CodeQL Results as Artifact
         if: always()
-        uses: actions/upload-artifact@v4.5.0
+        uses: actions/upload-artifact@v4.4.3
         with:
           name: codeql-results-${{ matrix.language }}
           path: /home/runner/work/_temp/codeql_databases/

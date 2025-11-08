@@ -51,12 +51,12 @@ jobs:
             registry.npmjs.org:443
 
       - name: Checkout repository
-        uses: actions/checkout@v5.2.0
+        uses: actions/checkout@v4.2.2
         with:
           persist-credentials: false
 
       - name: Dependency Review
-        uses: actions/dependency-review-action@v4.5.0
+        uses: actions/dependency-review-action@v4.4.0
         with:
           fail-on-severity: moderate
           fail-on-scopes: runtime
@@ -90,14 +90,14 @@ jobs:
             nodejs.org:443
 
       - name: Checkout repository
-        uses: actions/checkout@v5.2.0
+        uses: actions/checkout@v4.2.2
         with:
           persist-credentials: false
 
       # Node.js dependency scanning
       - name: Setup Node.js
         if: hashFiles('package.json') != ''
-        uses: actions/setup-node@v5.1.0
+        uses: actions/setup-node@v4.1.0
         with:
           node-version: 'lts/*'
           cache: 'npm'
@@ -114,7 +114,7 @@ jobs:
 
       - name: Upload npm audit results
         if: hashFiles('package.json') != '' && always()
-        uses: actions/upload-artifact@v4.5.0
+        uses: actions/upload-artifact@v4.4.3
         with:
           name: npm-audit-results
           path: npm-audit-results.json
@@ -125,7 +125,7 @@ jobs:
 
       # SBOM Generation for supply chain security
       - name: Generate SBOM
-        uses: anchore/sbom-action@v0.20.13
+        uses: anchore/sbom-action@v0.17.7
         with:
           format: spdx-json
           output-file: sbom.spdx.json
@@ -136,7 +136,7 @@ jobs:
 
       - name: Upload SBOM
         if: always()
-        uses: actions/upload-artifact@v4.5.0
+        uses: actions/upload-artifact@v4.4.3
         with:
           name: sbom-report
           path: sbom.spdx.json
@@ -167,13 +167,13 @@ jobs:
             bestpractices.coreinfrastructure.org:443
 
       - name: Checkout repository
-        uses: actions/checkout@v5.2.0
+        uses: actions/checkout@v4.2.2
         with:
           persist-credentials: false
 
       # OSSF Scorecard for supply chain security assessment
       - name: Run OSSF Scorecard
-        uses: ossf/scorecard-action@v2.5.0
+        uses: ossf/scorecard-action@v2.4.0
         with:
           results_file: results.sarif
           results_format: sarif
@@ -208,7 +208,7 @@ jobs:
 
       - name: Upload OSSF Scorecard results as artifact
         if: always()
-        uses: actions/upload-artifact@v4.5.0
+        uses: actions/upload-artifact@v4.4.3
         with:
           name: scorecard-results
           path: results.sarif
