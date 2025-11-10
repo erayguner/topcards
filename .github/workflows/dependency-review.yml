@@ -179,27 +179,7 @@ jobs:
           results_file: results.sarif
           results_format: sarif
           publish_results: true
-          # 2025 Enhancement: Enable all checks
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          checks: >-
-            Binary-Artifacts,
-            Branch-Protection,
-            CII-Best-Practices,
-            CI-Tests,
-            Code-Review,
-            Contributors,
-            Dangerous-Workflow,
-            Dependency-Update-Tool,
-            Dependencies,
-            Fuzzing,
-            License,
-            Maintained,
-            Packaging,
-            SAST,
-            Security-Policy,
-            Signed-Releases,
-            Token-Permissions,
-            Vulnerabilities
 
       - name: Upload OSSF Scorecard results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v4.31.2
